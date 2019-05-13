@@ -25,6 +25,8 @@ namespace OpenThreads {
 
 #if defined(_OPENTHREADS_ATOMIC_USE_LIBRARY_ROUTINES)
 
+    #error Not supported.
+
 // Non inline implementations for two special cases:
 // * win32
 // * i386 gcc
