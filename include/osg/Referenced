@@ -20,9 +20,7 @@
 #include <OpenThreads/Mutex>
 #include <OpenThreads/Atomic>
 
-#if !defined(_OPENTHREADS_ATOMIC_USE_MUTEX)
-# define _OSG_REFERENCED_USE_ATOMIC_OPERATIONS
-#endif
+#define _OSG_REFERENCED_USE_ATOMIC_OPERATIONS
 
 namespace osg {
 
