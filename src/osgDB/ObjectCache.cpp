@@ -16,7 +16,7 @@
 
 using namespace osgDB;
 
-bool ObjectCache::ClassComp::operator() (const ObjectCache::FileNameOptionsPair& lhs, const ObjectCache::FileNameOptionsPair& rhs)
+bool ObjectCache::ClassComp::operator() (const ObjectCache::FileNameOptionsPair& lhs, const ObjectCache::FileNameOptionsPair& rhs) const
 {
     // check if filename are the same
     if (lhs.first < rhs.first) return true;
