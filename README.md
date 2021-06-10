@@ -5,7 +5,7 @@ This fork was created to experiment with performance enhancements for [OpenMW](h
 
 OpenMW still works with "vanilla" OpenSceneGraph, but it is recommended to use the fork for better performance (around 10-15% on most devices). Note that the improvements are very specific to OpenMW and its animation code in particular; other OpenSceneGraph applications are not likely to see the same speed-up, or any speed-up at all if they are already GPU limited.
 
-The fork is currently based on the OpenSceneGraph-3.4 branch and will continue to be based on the latest stable branch of OSG at the time. 
+The fork is currently based on the OpenSceneGraph-3.6 branch and will continue to be based on the latest stable branch of OSG at the time. 
 
 - Use single precision matrices & planes by default.
 - Added option for single precision osg::Quat's (enabled by default). [Similar change rejected on osg-submissions.](http://forum.openscenegraph.org/viewtopic.php?t=12953)
