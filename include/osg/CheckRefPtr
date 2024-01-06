@@ -1,0 +1,10 @@
+#ifndef OSG_CHECK_REF_PTR
+#define OSG_CHECK_REF_PTR
+
+namespace osg {
+
+bool isRefPtrMoveable();
+
+}
+
+#endif

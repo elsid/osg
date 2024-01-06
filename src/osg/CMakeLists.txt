@@ -47,6 +47,7 @@ SET(TARGET_H
     ${HEADER_PATH}/Camera
     ${HEADER_PATH}/CameraView
     ${HEADER_PATH}/Capability
+    ${HEADER_PATH}/CheckRefPtr
     ${HEADER_PATH}/ClampColor
     ${HEADER_PATH}/ClearNode
     ${HEADER_PATH}/ClipControl
@@ -262,6 +263,7 @@ SET(TARGET_SRC
     Capability.cpp
     Camera.cpp
     CameraView.cpp
+    CheckRefPtr.cpp
     ClampColor.cpp
     ClearNode.cpp
     ClipControl.cpp
