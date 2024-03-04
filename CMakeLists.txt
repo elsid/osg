@@ -1381,3 +1381,5 @@ ADD_CUSTOM_TARGET(uninstall
 #
 include(FeatureSummary)
 feature_summary(WHAT ALL)
+
+INSTALL(EXPORT osg-targets NAMESPACE osg:: DESTINATION share)
