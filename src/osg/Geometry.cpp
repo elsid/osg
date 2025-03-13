@@ -164,6 +164,8 @@ void Geometry::setVertexArray(Array* array)
 {
     if (array && array->getBinding()==osg::Array::BIND_UNDEFINED) array->setBinding(osg::Array::BIND_PER_VERTEX);
 
+    Array* volatile oldArray = _vertexArray;
+
     _vertexArray = array;
 
     dirtyGLObjects();

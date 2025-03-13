@@ -103,9 +103,29 @@ void RigTransformSoftware::buildMinimumUpdateSet( const RigGeometry&rig )
 
 bool RigTransformSoftware::prepareData(RigGeometry&rig)
 {
+    osg::Array* volatile oldVertexArray0 = rig.getVertexArray();
+    osg::VertexBufferObject* volatile oldVertexArray0VertexBuffferObject = nullptr;
+
+    if (oldVertexArray0 != nullptr)
+        oldVertexArray0VertexBuffferObject = oldVertexArray0->getVertexBufferObject();
+
+    osg::Array* volatile sourceVertexArray0 = rig.getSourceGeometry()->getVertexArray();
+    osg::VertexBufferObject* volatile sourceVertexArrayOldVertexBuffferObject = nullptr;
+
+    if (sourceVertexArray0 != nullptr)
+        sourceVertexArrayOldVertexBuffferObject = sourceVertexArray0->getVertexBufferObject();
+
     ///set geom as it source
     if (rig.getSourceGeometry())
         rig.copyFrom(*rig.getSourceGeometry());
+
+    osg::VertexBufferObject* volatile sourceVertexArrayNewVertexBuffferObject = nullptr;
+
+    if (sourceVertexArray0 != nullptr)
+        sourceVertexArrayNewVertexBuffferObject = sourceVertexArray0->getVertexBufferObject();
+
+    if (sourceVertexArrayNewVertexBuffferObject != sourceVertexArrayOldVertexBuffferObject)
+        std::abort();
 
     osg::Vec3Array* normalSrc = dynamic_cast<osg::Vec3Array*>(rig.getSourceGeometry()->getNormalArray());
     osg::Vec3Array* positionSrc = dynamic_cast<osg::Vec3Array*>(rig.getSourceGeometry()->getVertexArray());
@@ -115,8 +135,21 @@ bool RigTransformSoftware::prepareData(RigGeometry&rig)
     if(normalSrc && normalSrc->size() != positionSrc->size())
         return false;
 
+    osg::Array* volatile oldVertexArray1 = rig.getVertexArray();
+    osg::VertexBufferObject* volatile oldVertexArray1VertexBuffferObject = nullptr;
+
+    if (oldVertexArray1 != nullptr)
+        oldVertexArray1VertexBuffferObject = oldVertexArray1->getVertexBufferObject();
+
     /// setup Vertex and Normal arrays with copy of sources
     rig.setVertexArray(new osg::Vec3Array);
+
+    osg::Array* volatile oldVertexArray2 = rig.getVertexArray();
+    osg::VertexBufferObject* volatile oldVertexArray2VertexBuffferObject = nullptr;
+
+    if (oldVertexArray2 != nullptr)
+        oldVertexArray2VertexBuffferObject = oldVertexArray2->getVertexBufferObject();
+
     osg::Vec3Array* positionDst = new osg::Vec3Array;
     rig.setVertexArray(positionDst);
     *positionDst = *positionSrc;

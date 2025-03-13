@@ -25,6 +25,8 @@
 #include <iosfwd>
 #include <list>
 #include <map>
+#include <thread>
+#include <atomic>
 
 #ifndef GL_ARB_vertex_buffer_object
     #define GL_ARRAY_BUFFER_ARB               0x8892
@@ -255,8 +257,10 @@ class OSG_EXPORT GLBufferObject : public GraphicsObject
         bool                    _dirty;
 
         typedef std::vector<BufferEntry> BufferEntries;
+        std::atomic<std::thread::id> bufferEntriesThread;
         BufferEntries           _bufferEntries;
 
+        std::atomic<std::thread::id> bufferObjectThread;
         BufferObject*           _bufferObject;
 
     public:

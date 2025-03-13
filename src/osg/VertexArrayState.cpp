@@ -727,6 +727,7 @@ void VertexArrayState::setArray(ArrayDispatch* vad, osg::State& state, const osg
 {
     if (new_array)
     {
+        volatile int newArrayReferenceCount = new_array->referenceCount();
         if (!vad->active)
         {
             vad->active = true;
@@ -752,6 +753,10 @@ void VertexArrayState::setArray(ArrayDispatch* vad, osg::State& state, const osg
             GLBufferObject* vbo = isVertexBufferObjectSupported() ? new_array->getOrCreateGLBufferObject(state.getContextID()) : 0;
             if (vbo)
             {
+                const Array* volatile oldArray = vad->array;
+                const BufferObject* volatile oldArrayBufferObject = oldArray->getBufferObject();
+                BufferObject* volatile newArrayBufferObject = const_cast<BufferObject*>(new_array->getBufferObject());
+                volatile int newArrayBufferObjectReferenceCount = newArrayBufferObject->referenceCount();
                 bindVertexBufferObject(vbo);
                 vad->dispatch(state, new_array, vbo);
             }

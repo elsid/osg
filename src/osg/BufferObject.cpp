@@ -29,6 +29,28 @@
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Mutex>
 
+namespace
+{
+
+struct ThreadScoped
+{
+    std::atomic<std::thread::id>& id_;
+
+    explicit ThreadScoped(std::atomic<std::thread::id>& id)
+        : id_(id)
+    {
+        if (id_.exchange(std::this_thread::get_id()) != std::thread::id())
+            std::abort();
+    }
+
+    ~ThreadScoped()
+    {
+        if (id_.exchange(std::thread::id()) != std::this_thread::get_id())
+            std::abort();
+    }
+};
+}
+
 #if 0
     #define CHECK_CONSISTENCY checkConsistency();
 #else
@@ -92,6 +114,9 @@ void GLBufferObject::setBufferObject(BufferObject* bufferObject)
 
 void GLBufferObject::assign(BufferObject* bufferObject)
 {
+    const ThreadScoped threadScoped1(bufferObjectThread);
+    const ThreadScoped threadScoped2(bufferEntriesThread);
+
     _bufferObject = bufferObject;
 
     if (_bufferObject)
@@ -113,12 +138,19 @@ void GLBufferObject::assign(BufferObject* bufferObject)
 
 void GLBufferObject::clear()
 {
+    volatile int thisReferenceCount = referenceCount();
+    const ThreadScoped threadScoped2(bufferEntriesThread);
     _bufferEntries.clear();
     _dirty = true;
 }
 
 void GLBufferObject::compileBuffer()
 {
+    volatile int thisReferenceCount = referenceCount();
+
+    const ThreadScoped threadScoped1(bufferObjectThread);
+    const ThreadScoped threadScoped2(bufferEntriesThread);
+
     _dirty = false;
 
     _bufferEntries.reserve(_bufferObject->getNumBufferData());
@@ -249,6 +281,8 @@ void GLBufferObject::deleteGLObject()
     OSG_DEBUG<<"GLBufferObject::deleteGLObject() "<<_glObjectID<<std::endl;
     if (_glObjectID!=0)
     {
+        const ThreadScoped threadScoped2(bufferEntriesThread);
+
         _extensions->glDeleteBuffers(1, &_glObjectID);
         _glObjectID = 0;
 
@@ -1153,6 +1187,8 @@ unsigned int BufferObject::addBufferData(BufferData* bd)
 
 void BufferObject::removeBufferData(unsigned int index)
 {
+    volatile int thisReferenceCount = referenceCount();
+
     if (index>=_bufferDataList.size())
     {
         OSG_WARN<<"Error "<<className()<<"::removeBufferData("<<index<<") out of range."<<std::endl;
