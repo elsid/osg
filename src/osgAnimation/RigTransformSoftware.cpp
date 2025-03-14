@@ -101,34 +101,66 @@ void RigTransformSoftware::buildMinimumUpdateSet( const RigGeometry&rig )
 }
 
 
-bool RigTransformSoftware::prepareData(RigGeometry&rig)
+bool RigTransformSoftware::prepareData(RigGeometry& rig)
 {
-    ///set geom as it source
-    if (rig.getSourceGeometry())
-        rig.copyFrom(*rig.getSourceGeometry());
-
-    osg::Vec3Array* normalSrc = dynamic_cast<osg::Vec3Array*>(rig.getSourceGeometry()->getNormalArray());
-    osg::Vec3Array* positionSrc = dynamic_cast<osg::Vec3Array*>(rig.getSourceGeometry()->getVertexArray());
-
-    if(!(positionSrc) || positionSrc->empty() )
+    if (rig.getSourceGeometry() == 0)
         return false;
-    if(normalSrc && normalSrc->size() != positionSrc->size())
+
+    osg::Geometry& source = *rig.getSourceGeometry();
+
+    osg::Vec3Array* const positionSrc = dynamic_cast<osg::Vec3Array*>(source.getVertexArray());
+
+    if (positionSrc == 0 || positionSrc->empty())
+        return false;
+
+    osg::Vec3Array* const normalSrc = dynamic_cast<osg::Vec3Array*>(source.getNormalArray());
+
+    if (normalSrc != 0 && normalSrc->size() != positionSrc->size())
         return false;
 
     /// setup Vertex and Normal arrays with copy of sources
-    rig.setVertexArray(new osg::Vec3Array);
-    osg::Vec3Array* positionDst = new osg::Vec3Array;
-    rig.setVertexArray(positionDst);
-    *positionDst = *positionSrc;
+    osg::ref_ptr<osg::Vec3Array> positionDst(new osg::Vec3Array(*positionSrc, osg::CopyOp::SHALLOW_COPY));
     positionDst->setDataVariance(osg::Object::DYNAMIC);
 
-    if(normalSrc)
+    if (osg::Array* const oldArray = rig.getVertexArray())
+        if (osg::VertexBufferObject* const vbo = oldArray->getVertexBufferObject())
+            positionDst->setVertexBufferObject(vbo);
+
+    rig.setVertexArray(positionDst);
+
+    if (normalSrc)
     {
-        osg::Vec3Array* normalDst = new osg::Vec3Array;
-        *normalDst = *normalSrc;
-        rig.setNormalArray(normalDst, osg::Array::BIND_PER_VERTEX);
+        osg::ref_ptr<osg::Vec3Array> normalDst(new osg::Vec3Array(*normalSrc, osg::CopyOp::SHALLOW_COPY));
         normalDst->setDataVariance(osg::Object::DYNAMIC);
+
+        if (osg::Array* const oldArray = rig.getNormalArray())
+            if (osg::VertexBufferObject* const vbo = oldArray->getVertexBufferObject())
+                normalDst->setVertexBufferObject(vbo);
+
+        rig.setNormalArray(normalDst, osg::Array::BIND_PER_VERTEX);
     }
+
+    rig.setStateSet(source.getStateSet());
+
+    rig.getPrimitiveSetList() = source.getPrimitiveSetList();
+
+    if (source.getColorArray())
+        rig.setColorArray(source.getColorArray());
+
+    if (source.getSecondaryColorArray())
+        rig.setSecondaryColorArray(source.getSecondaryColorArray());
+
+    if (source.getFogCoordArray())
+        rig.setFogCoordArray(source.getFogCoordArray());
+
+    for (unsigned int ti = 0, n = source.getNumTexCoordArrays(); ti < n; ++ti)
+        if (osg::Array* const array = source.getTexCoordArray(ti))
+            rig.setTexCoordArray(ti, array);
+
+    osg::Geometry::ArrayList& arrayList = source.getVertexAttribArrayList();
+    for (unsigned int vi = 0, n = arrayList.size(); vi < n; ++vi)
+        if (osg::Array* array = arrayList[vi].get())
+            rig.setVertexAttribArray(vi, array);
 
     /// build minimal set of VertexGroup
     buildMinimumUpdateSet(rig);
