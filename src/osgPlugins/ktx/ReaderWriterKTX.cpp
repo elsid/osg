@@ -210,6 +210,9 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
         header.glInternalFormat, header.glFormat,
         header.glType, totalImageData, osg::Image::USE_NEW_DELETE);
 
+    // KTX textures are stored in their original coordinate system (TOP_LEFT)
+    image->setOrigin(osg::Image::TOP_LEFT);
+
     if (header.numberOfMipmapLevels > 1)
         image->setMipmapLevels(mipmapData);
 
