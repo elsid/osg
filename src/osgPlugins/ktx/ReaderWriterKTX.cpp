@@ -16,6 +16,8 @@
 #include <osgDB/FileNameUtils>
 #include <osgDB/FileUtils>
 #include <istream>
+#include <vector>
+#include <cstring>
 
 // Macro similar to what's in FLT/TRP plugins (except it uses wide char under Windows if OSG_USE_UTF8_FILENAME)
 #if defined(_WIN32)
@@ -115,8 +117,96 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
     if (header.numberOfMipmapLevels == 0)
         header.numberOfMipmapLevels = 1;
 
-    //read keyvalue data. Will be ignoring for now
-    fin.ignore(header.bytesOfKeyValueData);
+    // Parse key-value metadata to check for KTXorientation
+    bool hasValidOrientation = true; // Default to true for non-ASTC or when no metadata
+    std::string ktxOrientation;
+
+    if (header.bytesOfKeyValueData > 0)
+    {
+        std::vector<char> kvData(header.bytesOfKeyValueData);
+        fin.read(kvData.data(), header.bytesOfKeyValueData);
+        if (!fin.good())
+        {
+            OSG_WARN << "Failed to read KTX key-value data." << std::endl;
+            return ReadResult(ReadResult::ERROR_IN_READING_FILE);
+        }
+
+        // Parse key-value pairs
+        size_t offset = 0;
+        while (offset < header.bytesOfKeyValueData)
+        {
+            if (offset + sizeof(uint32_t) > header.bytesOfKeyValueData)
+                break;
+
+            uint32_t keyAndValueByteSize;
+            memcpy(&keyAndValueByteSize, kvData.data() + offset, sizeof(uint32_t));
+            if (header.endianness != MyEndian)
+                osg::swapBytes4(reinterpret_cast<char*>(&keyAndValueByteSize));
+            offset += sizeof(uint32_t);
+
+            if (offset + keyAndValueByteSize > header.bytesOfKeyValueData)
+                break;
+
+            // Find the null terminator to separate key from value
+            std::string key;
+            size_t keyStart = offset;
+            size_t keyEnd = keyStart;
+            while (keyEnd < offset + keyAndValueByteSize && kvData[keyEnd] != '\0')
+                keyEnd++;
+
+            if (keyEnd < offset + keyAndValueByteSize)
+            {
+                key = std::string(kvData.data() + keyStart, keyEnd - keyStart);
+
+                // Check for KTXorientation (note: some files incorrectly use KTXOrientation)
+                if (key == "KTXorientation" || key == "KTXOrientation")
+                {
+                    size_t valueStart = keyEnd + 1;
+                    size_t valueSize = keyAndValueByteSize - (valueStart - keyStart);
+                    ktxOrientation = std::string(kvData.data() + valueStart, valueSize);
+
+                    // Remove any trailing null bytes
+                    size_t nullPos = ktxOrientation.find('\0');
+                    if (nullPos != std::string::npos)
+                        ktxOrientation = ktxOrientation.substr(0, nullPos);
+
+                    OSG_INFO << "Found KTXorientation: " << ktxOrientation << std::endl;
+                }
+            }
+
+            // Align to 4 bytes
+            offset += keyAndValueByteSize;
+            uint32_t padding = (4 - (keyAndValueByteSize % 4)) % 4;
+            offset += padding;
+        }
+    }
+    else
+    {
+        // No key-value data, skip
+        fin.ignore(0);
+    }
+
+    // Check if this is an ASTC texture
+    bool isASTCTexture = (header.glInternalFormat >= 0x93B0 && header.glInternalFormat <= 0x93DD);
+
+    // For ASTC textures, validate orientation
+    if (isASTCTexture)
+    {
+        // ASTC textures must have S=r,T=u orientation (OpenGL native, bottom-left origin)
+        // If no KTXorientation is specified, we assume the default which is incorrect for ASTC
+        if (ktxOrientation.empty())
+        {
+            OSG_WARN << "ASTC texture in KTX file lacks KTXorientation metadata. "
+                     << "ASTC textures require explicit KTXorientation=S=r,T=u" << std::endl;
+            return ReadResult(ReadResult::FILE_NOT_HANDLED);
+        }
+        else if (ktxOrientation != "S=r,T=u" && ktxOrientation != "S=r,T=u,R=o")
+        {
+            OSG_WARN << "ASTC texture in KTX file has incompatible orientation: " << ktxOrientation
+                     << ". ASTC textures require KTXorientation=S=r,T=u" << std::endl;
+            return ReadResult(ReadResult::FILE_NOT_HANDLED);
+        }
+    }
 
     uint32_t imageSize;
     uint32_t totalImageSize = fileLength -
@@ -210,8 +300,18 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
         header.glInternalFormat, header.glFormat,
         header.glType, totalImageData, osg::Image::USE_NEW_DELETE);
 
-    // KTX textures are stored in their original coordinate system (TOP_LEFT)
-    image->setOrigin(osg::Image::TOP_LEFT);
+    // Set origin based on KTXorientation metadata
+    // S=r,T=u means OpenGL orientation (bottom-left origin)
+    // S=r,T=d means standard image orientation (top-left origin)
+    if (ktxOrientation == "S=r,T=u" || ktxOrientation == "S=r,T=u,R=o")
+    {
+        image->setOrigin(osg::Image::BOTTOM_LEFT);
+    }
+    else
+    {
+        // Default to TOP_LEFT for S=r,T=d or when no orientation is specified
+        image->setOrigin(osg::Image::TOP_LEFT);
+    }
 
     if (header.numberOfMipmapLevels > 1)
         image->setMipmapLevels(mipmapData);

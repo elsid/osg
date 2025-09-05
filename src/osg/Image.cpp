@@ -1827,7 +1827,6 @@ void Image::flipVertical()
 
     const bool dxtc(dxtc_tool::isDXTC(_pixelFormat));
     const bool rgtc(dxtc_tool::isRGTC(_pixelFormat));
-    const bool astc(isCompressed() && (_pixelFormat >= GL_COMPRESSED_RGBA_ASTC_4x4_KHR && _pixelFormat <= GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR));
 
     if (_mipmapData.empty())
     {
@@ -1842,8 +1841,7 @@ void Image::flipVertical()
                     OSG_NOTICE << "Notice Image::flipVertical(): Vertical flip do not succeed" << std::endl;
                 }
             }
-            // ASTC textures are stored in KTX format with native OpenGL orientation - skip flipping
-            else if (!astc)
+            else
             {
                 if (isCompressed()) OSG_NOTICE << "Notice Image::flipVertical(): file=" << _fileName << " image is compressed but normal v-flip is used" << std::endl;
                 // its not a compressed image, so implement flip oursleves.
@@ -1890,8 +1888,7 @@ void Image::flipVertical()
                     OSG_NOTICE << "Notice Image::flipVertical(): Vertical flip did not succeed" << std::endl;
                 }
             }
-            // ASTC textures are stored in KTX format with native OpenGL orientation - skip flipping
-            else if (!astc)
+            else
             {
                 // it's not a compressed image, so implement flip ourselves.
                 unsigned int mipRowSize = computeRowWidthInBytes(s, _pixelFormat, _dataType, _packing);
