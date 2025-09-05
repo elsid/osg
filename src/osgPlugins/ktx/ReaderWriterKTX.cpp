@@ -186,26 +186,18 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
         fin.ignore(0);
     }
 
-    // Check if this is an ASTC texture
-    bool isASTCTexture = (header.glInternalFormat >= 0x93B0 && header.glInternalFormat <= 0x93DD);
-
-    // For ASTC textures, validate orientation
-    if (isASTCTexture)
+    // Warn about orientation issues
+    if (ktxOrientation.empty())
     {
-        // ASTC textures must have S=r,T=u orientation (OpenGL native, bottom-left origin)
-        // If no KTXorientation is specified, we assume the default which is incorrect for ASTC
-        if (ktxOrientation.empty())
-        {
-            OSG_WARN << "ASTC texture in KTX file lacks KTXorientation metadata. "
-                     << "ASTC textures require explicit KTXorientation=S=r,T=u" << std::endl;
-            return ReadResult(ReadResult::FILE_NOT_HANDLED);
-        }
-        else if (ktxOrientation != "S=r,T=u" && ktxOrientation != "S=r,T=u,R=o")
-        {
-            OSG_WARN << "ASTC texture in KTX file has incompatible orientation: " << ktxOrientation
-                     << ". ASTC textures require KTXorientation=S=r,T=u" << std::endl;
-            return ReadResult(ReadResult::FILE_NOT_HANDLED);
-        }
+        OSG_WARN << "KTX file lacks KTXorientation metadata. OpenSceneGraph expects KTX textures "
+                 << "in OpenGL orientation (S=r,T=u). Textures created for DirectX/Vulkan (S=r,T=d) "
+                 << "may appear vertically flipped." << std::endl;
+    }
+    else if (ktxOrientation == "S=r,T=d" || ktxOrientation == "S=r,T=d,R=i" || ktxOrientation == "S=r,T=d,R=o")
+    {
+        OSG_WARN << "KTX file has DirectX/Vulkan orientation (" << ktxOrientation 
+                 << "). OpenSceneGraph expects OpenGL orientation (S=r,T=u). "
+                 << "Texture may appear vertically flipped." << std::endl;
     }
 
     uint32_t imageSize;
