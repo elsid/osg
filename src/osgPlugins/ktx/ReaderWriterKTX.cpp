@@ -13,11 +13,13 @@
 
 #include "ReaderWriterKTX.h"
 #include <osg/Endian>
+#include <osg/ValueObject>
 #include <osgDB/FileNameUtils>
 #include <osgDB/FileUtils>
 #include <istream>
 #include <vector>
 #include <cstring>
+#include <map>
 
 // Macro similar to what's in FLT/TRP plugins (except it uses wide char under Windows if OSG_USE_UTF8_FILENAME)
 #if defined(_WIN32)
@@ -117,9 +119,8 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
     if (header.numberOfMipmapLevels == 0)
         header.numberOfMipmapLevels = 1;
 
-    // Parse key-value metadata to check for KTXorientation
-    bool hasValidOrientation = true; // Default to true for non-ASTC or when no metadata
-    std::string ktxOrientation;
+    // Parse key-value metadata
+    std::map<std::string, std::string> ktxMetadata;
 
     if (header.bytesOfKeyValueData > 0)
     {
@@ -158,20 +159,18 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
             {
                 key = std::string(kvData.data() + keyStart, keyEnd - keyStart);
 
-                // Check for KTXorientation (note: some files incorrectly use KTXOrientation)
-                if (key == "KTXorientation" || key == "KTXOrientation")
-                {
-                    size_t valueStart = keyEnd + 1;
-                    size_t valueSize = keyAndValueByteSize - (valueStart - keyStart);
-                    ktxOrientation = std::string(kvData.data() + valueStart, valueSize);
+                // Extract the value (everything after the null terminator)
+                size_t valueStart = keyEnd + 1;
+                size_t valueSize = keyAndValueByteSize - (valueStart - keyStart);
+                std::string value(kvData.data() + valueStart, valueSize);
 
-                    // Remove any trailing null bytes
-                    size_t nullPos = ktxOrientation.find('\0');
-                    if (nullPos != std::string::npos)
-                        ktxOrientation = ktxOrientation.substr(0, nullPos);
+                // Remove any trailing null bytes from the value
+                size_t nullPos = value.find('\0');
+                if (nullPos != std::string::npos)
+                    value = value.substr(0, nullPos);
 
-                    OSG_INFO << "Found KTXorientation: " << ktxOrientation << std::endl;
-                }
+                // Store the metadata
+                ktxMetadata[key] = value;
             }
 
             // Align to 4 bytes
@@ -184,20 +183,6 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
     {
         // No key-value data, skip
         fin.ignore(0);
-    }
-
-    // Warn about orientation issues
-    if (ktxOrientation.empty())
-    {
-        OSG_WARN << "KTX file lacks KTXorientation metadata. OpenSceneGraph expects KTX textures "
-                 << "in OpenGL orientation (S=r,T=u). Textures created for DirectX/Vulkan (S=r,T=d) "
-                 << "may appear vertically flipped." << std::endl;
-    }
-    else if (ktxOrientation == "S=r,T=d" || ktxOrientation == "S=r,T=d,R=i" || ktxOrientation == "S=r,T=d,R=o")
-    {
-        OSG_WARN << "KTX file has DirectX/Vulkan orientation (" << ktxOrientation 
-                 << "). OpenSceneGraph expects OpenGL orientation (S=r,T=u). "
-                 << "Texture may appear vertically flipped." << std::endl;
     }
 
     uint32_t imageSize;
@@ -295,7 +280,13 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
     // Set origin based on KTXorientation metadata
     // S=r,T=u means OpenGL orientation (bottom-left origin)
     // S=r,T=d means standard image orientation (top-left origin)
-    if (ktxOrientation == "S=r,T=u" || ktxOrientation == "S=r,T=u,R=o")
+    // Note: some files incorrectly use KTXOrientation with capital O
+    auto orientIt = ktxMetadata.find("KTXorientation");
+    if (orientIt == ktxMetadata.end())
+        orientIt = ktxMetadata.find("KTXOrientation");
+
+    if (orientIt != ktxMetadata.end() &&
+        (orientIt->second == "S=r,T=u" || orientIt->second == "S=r,T=u,R=o"))
     {
         image->setOrigin(osg::Image::BOTTOM_LEFT);
     }
@@ -307,6 +298,13 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
 
     if (header.numberOfMipmapLevels > 1)
         image->setMipmapLevels(mipmapData);
+
+    // Store all KTX metadata in the image's userdata with "KTX:" prefix
+    // This avoids conflicts with other OSG metadata
+    for (const auto& kv : ktxMetadata)
+    {
+        image->setUserValue("KTX:" + kv.first, kv.second);
+    }
 
     return image.get();
 }
