@@ -1995,85 +1995,85 @@ void Texture::getCompressedSize(GLenum internalFormat, GLint width, GLint height
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_4x4_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR)
     {
         blockSize = 16;
-        size = ceil(width/4.0)*ceil(height/4.0)*blockSize;
+        size = ((width+3)/4)*((height+3)/4)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_5x4_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR)
     {
         blockSize = 16;
-        size = ceil(width/5.0)*ceil(height/4.0)*blockSize;
+        size = ((width+4)/5)*((height+3)/4)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_5x5_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR)
     {
         blockSize = 16;
-        size = ceil(width/5.0)*ceil(height/5.0)*blockSize;
+        size = ((width+4)/5)*((height+4)/5)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_6x5_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR)
     {
         blockSize = 16;
-        size = ceil(width/6.0)*ceil(height/5.0)*blockSize;
+        size = ((width+5)/6)*((height+4)/5)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_6x6_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR)
     {
         blockSize = 16;
-        size = ceil(width/6.0)*ceil(height/6.0)*blockSize;
+        size = ((width+5)/6)*((height+5)/6)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_8x5_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR)
     {
         blockSize = 16;
-        size = ceil(width/8.0)*ceil(height/5.0)*blockSize;
+        size = ((width+7)/8)*((height+4)/5)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_8x6_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR)
     {
         blockSize = 16;
-        size = ceil(width/8.0)*ceil(height/6.0)*blockSize;
+        size = ((width+7)/8)*((height+5)/6)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_8x8_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR)
     {
         blockSize = 16;
-        size = ceil(width/8.0)*ceil(height/8.0)*blockSize;
+        size = ((width+7)/8)*((height+7)/8)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_10x5_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR)
     {
         blockSize = 16;
-        size = ceil(width/10.0)*ceil(height/5.0)*blockSize;
+        size = ((width+9)/10)*((height+4)/5)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_10x6_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR)
     {
         blockSize = 16;
-        size = ceil(width/10.0)*ceil(height/6.0)*blockSize;
+        size = ((width+9)/10)*((height+5)/6)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_10x8_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR)
     {
         blockSize = 16;
-        size = ceil(width/10.0)*ceil(height/8.0)*blockSize;
+        size = ((width+9)/10)*((height+7)/8)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_10x10_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR)
     {
         blockSize = 16;
-        size = ceil(width/10.0)*ceil(height/10.0)*blockSize;
+        size = ((width+9)/10)*((height+9)/10)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_12x10_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR)
     {
         blockSize = 16;
-        size = ceil(width/12.0)*ceil(height/10.0)*blockSize;
+        size = ((width+11)/12)*((height+9)/10)*depth*blockSize;
         return;
     }
     else if (internalFormat == GL_COMPRESSED_RGBA_ASTC_12x12_KHR || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR)
     {
         blockSize = 16;
-        size = ceil(width/12.0)*ceil(height/12.0)*blockSize;
+        size = ((width+11)/12)*((height+11)/12)*depth*blockSize;
         return;
     }
     else

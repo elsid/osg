@@ -13,9 +13,13 @@
 
 #include "ReaderWriterKTX.h"
 #include <osg/Endian>
+#include <osg/ValueObject>
 #include <osgDB/FileNameUtils>
 #include <osgDB/FileUtils>
 #include <istream>
+#include <vector>
+#include <cstring>
+#include <map>
 
 // Macro similar to what's in FLT/TRP plugins (except it uses wide char under Windows if OSG_USE_UTF8_FILENAME)
 #if defined(_WIN32)
@@ -115,8 +119,66 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
     if (header.numberOfMipmapLevels == 0)
         header.numberOfMipmapLevels = 1;
 
-    //read keyvalue data. Will be ignoring for now
-    fin.ignore(header.bytesOfKeyValueData);
+    // Parse key-value metadata
+    std::map<std::string, std::string> ktxMetadata;
+
+    if (header.bytesOfKeyValueData > 0)
+    {
+        std::vector<char> kvData(header.bytesOfKeyValueData);
+        fin.read(kvData.data(), header.bytesOfKeyValueData);
+        if (!fin.good())
+        {
+            OSG_WARN << "Failed to read KTX key-value data." << std::endl;
+            return ReadResult(ReadResult::ERROR_IN_READING_FILE);
+        }
+
+        // Parse key-value pairs
+        size_t offset = 0;
+        while (offset < header.bytesOfKeyValueData)
+        {
+            if (offset + sizeof(uint32_t) > header.bytesOfKeyValueData)
+                break;
+
+            uint32_t keyAndValueByteSize;
+            memcpy(&keyAndValueByteSize, kvData.data() + offset, sizeof(uint32_t));
+            if (header.endianness != MyEndian)
+                osg::swapBytes4(reinterpret_cast<char*>(&keyAndValueByteSize));
+            offset += sizeof(uint32_t);
+
+            if (offset + keyAndValueByteSize > header.bytesOfKeyValueData)
+                break;
+
+            // Find the null terminator to separate key from value
+            std::string key;
+            size_t keyStart = offset;
+            size_t keyEnd = keyStart;
+            while (keyEnd < offset + keyAndValueByteSize && kvData[keyEnd] != '\0')
+                keyEnd++;
+
+            if (keyEnd < offset + keyAndValueByteSize)
+            {
+                key = std::string(kvData.data() + keyStart, keyEnd - keyStart);
+
+                // Extract the value (everything after the null terminator)
+                size_t valueStart = keyEnd + 1;
+                size_t valueSize = keyAndValueByteSize - (valueStart - keyStart);
+                std::string value(kvData.data() + valueStart, valueSize);
+
+                // Remove any trailing null bytes from the value
+                size_t nullPos = value.find('\0');
+                if (nullPos != std::string::npos)
+                    value = value.substr(0, nullPos);
+
+                // Store the metadata
+                ktxMetadata[key] = value;
+            }
+
+            // Align to 4 bytes
+            offset += keyAndValueByteSize;
+            uint32_t padding = (4 - (keyAndValueByteSize % 4)) % 4;
+            offset += padding;
+        }
+    }
 
     uint32_t imageSize;
     uint32_t totalImageSize = fileLength -
@@ -210,8 +272,34 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
         header.glInternalFormat, header.glFormat,
         header.glType, totalImageData, osg::Image::USE_NEW_DELETE);
 
+    // Set origin based on KTXorientation metadata
+    // S=r,T=u means OpenGL orientation (bottom-left origin)
+    // S=r,T=d means standard image orientation (top-left origin)
+    // Note: some files incorrectly use KTXOrientation with capital O
+    auto orientIt = ktxMetadata.find("KTXorientation");
+    if (orientIt == ktxMetadata.end())
+        orientIt = ktxMetadata.find("KTXOrientation");
+
+    if (orientIt != ktxMetadata.end() &&
+        (orientIt->second == "S=r,T=u" || orientIt->second == "S=r,T=u,R=o"))
+    {
+        image->setOrigin(osg::Image::BOTTOM_LEFT);
+    }
+    else
+    {
+        // Default to TOP_LEFT for S=r,T=d or when no orientation is specified
+        image->setOrigin(osg::Image::TOP_LEFT);
+    }
+
     if (header.numberOfMipmapLevels > 1)
         image->setMipmapLevels(mipmapData);
+
+    // Store all KTX metadata in the image's userdata with "KTX:" prefix
+    // This avoids conflicts with other OSG metadata
+    for (const auto& kv : ktxMetadata)
+    {
+        image->setUserValue("KTX:" + kv.first, kv.second);
+    }
 
     return image.get();
 }
