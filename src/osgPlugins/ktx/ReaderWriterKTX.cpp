@@ -179,11 +179,6 @@ osgDB::ReaderWriter::ReadResult ReaderWriterKTX::readKTXStream(std::istream& fin
             offset += padding;
         }
     }
-    else
-    {
-        // No key-value data, skip
-        fin.ignore(0);
-    }
 
     uint32_t imageSize;
     uint32_t totalImageSize = fileLength -
