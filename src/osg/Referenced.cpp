@@ -26,6 +26,8 @@
 
 #include <osg/DeleteHandler>
 
+#include <osg/referenced_counter.hpp>
+
 namespace osg
 {
 
@@ -141,6 +143,7 @@ Referenced::Referenced():
     }
 #endif
 
+    addReferenced(*this);
 }
 
 Referenced::Referenced(bool /*threadSafeRefUnref*/):
@@ -164,6 +167,8 @@ Referenced::Referenced(bool /*threadSafeRefUnref*/):
         printf("Object created, total num=%d\n",s_numObjects);
     }
 #endif
+
+    addReferenced(*this);
 }
 
 Referenced::Referenced(const Referenced&):
@@ -187,6 +192,8 @@ Referenced::Referenced(const Referenced&):
         printf("Object created, total num=%d\n",s_numObjects);
     }
 #endif
+
+    addReferenced(*this);
 }
 
 Referenced::~Referenced()
@@ -287,6 +294,8 @@ void Referenced::signalObserversAndDelete(bool signalDelete, bool doDelete) cons
     {
         if (_refCount!=0)
             OSG_NOTICE<<"Warning Referenced::signalObserversAndDelete(,,) doing delete with _refCount="<<_refCount<<std::endl;
+
+        removeReferenced(*this);
 
         if (getDeleteHandler())
         {

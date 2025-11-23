@@ -231,6 +231,7 @@ SET(TARGET_H
     ${HEADER_PATH}/View
     ${HEADER_PATH}/Viewport
     ${HEADER_PATH}/ViewportIndexed
+    ${HEADER_PATH}/referenced_counter.hpp
     ${OPENSCENEGRAPH_VERSION_HEADER}
     ${OPENSCENEGRAPH_CONFIG_HEADER}
     ${OPENSCENEGRAPH_OPENGL_HEADER}
@@ -406,6 +407,7 @@ SET(TARGET_SRC
     View.cpp
     Viewport.cpp
     ViewportIndexed.cpp
+    referenced_counter.cpp
 
     glu/libutil/error.cpp
     glu/libutil/mipmap.cpp
@@ -438,7 +440,6 @@ SET(TARGET_SRC
 
     ${OPENSCENEGRAPH_VERSIONINFO_RC}
 )
-
 
 SET(TARGET_LIBRARIES OpenThreads)
 
