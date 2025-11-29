@@ -1297,10 +1297,6 @@ VertexBufferObject::VertexBufferObject(const VertexBufferObject& vbo,const CopyO
 {
 }
 
-VertexBufferObject::~VertexBufferObject()
-{
-}
-
 unsigned int VertexBufferObject::addArray(osg::Array* array)
 {
     return addBufferData(array);

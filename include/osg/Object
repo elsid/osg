@@ -74,6 +74,8 @@ class OSG_EXPORT Object : public Referenced
           * shallow vs deep copying of dynamic data.*/
         Object(const Object&,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
 
+        virtual ~Object();
+
         /** Clone the type of an object, with Object* return type.
             Must be defined by derived classes.*/
         virtual Object* cloneType() const = 0;
@@ -290,16 +292,6 @@ class OSG_EXPORT Object : public Referenced
 
 
     protected:
-
-        /** Object destructor. Note, is protected so that Objects cannot
-            be deleted other than by being dereferenced and the reference
-            count being zero (see osg::Referenced), preventing the deletion
-            of nodes which are still in use. This also means that
-            Nodes cannot be created on stack i.e Node node will not compile,
-            forcing all nodes to be created on the heap i.e Node* node
-            = new Node().*/
-        virtual ~Object();
-
         std::string _name;
         DataVariance _dataVariance;
 

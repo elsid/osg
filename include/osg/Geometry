@@ -163,6 +163,21 @@ class OSG_EXPORT Geometry : public Drawable
         osg::VertexBufferObject* getOrCreateVertexBufferObject();
         osg::ElementBufferObject* getOrCreateElementBufferObject();
 
+        const std::shared_ptr<std::pmr::memory_resource>& getArrayMemoryResource() const
+        {
+            return _arrayMemoryResource;
+        }
+
+        void setArrayMemoryResource(const std::shared_ptr<std::pmr::memory_resource>& value)
+        {
+            _arrayMemoryResource = value;
+        }
+
+        void setArrayMemoryResource(std::shared_ptr<std::pmr::memory_resource>&& value)
+        {
+            _arrayMemoryResource = std::move(value);
+        }
+
 
         /** Return the estimated size of GLObjects (display lists/vertex buffer objects) that are associated with this drawable.
           * This size is used a hint for reuse of deleted display lists/vertex buffer objects. */
@@ -232,6 +247,8 @@ class OSG_EXPORT Geometry : public Drawable
         ArrayList                       _vertexAttribList;
 
         bool                            _containsDeprecatedData;
+
+        std::shared_ptr<std::pmr::memory_resource> _arrayMemoryResource;
 
         virtual VertexArrayState* createVertexArrayStateImplementation(RenderInfo& renderInfo) const;
 
