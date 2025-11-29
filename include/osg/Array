@@ -143,7 +143,7 @@ class OSG_EXPORT Array : public BufferData
             _normalize(false),
             _preserveDataType(false) {}
 
-       Array(const Array& array,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+        Array(const Array& array,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
             BufferData(array,copyop),
             _arrayType(array._arrayType),
             _dataSize(array._dataSize),
@@ -151,6 +151,8 @@ class OSG_EXPORT Array : public BufferData
             _binding(array._binding),
             _normalize(array._normalize),
             _preserveDataType(array._preserveDataType) {}
+
+        virtual Array* cloneWithAllocator(const CopyOp& copyOp, const std::shared_ptr<std::pmr::memory_resource>& memoryResource) const = 0;
 
         virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const Array*>(obj)!=NULL; }
         virtual const char* libraryName() const { return "osg"; }
@@ -219,9 +221,6 @@ class OSG_EXPORT Array : public BufferData
         inline const osg::VertexBufferObject* getVertexBufferObject() const { return dynamic_cast<const osg::VertexBufferObject*>(_bufferObject.get());  }
 
     protected:
-
-        virtual ~Array() {}
-
         Type    _arrayType;
         GLint   _dataSize;
         GLenum  _dataType;
@@ -248,6 +247,12 @@ class TemplateArray : public Array, public MixinVector<T>
         TemplateArray(const TemplateArray& ta,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
             Array(ta,copyop),
             MixinVector<T>(ta) {}
+
+        TemplateArray(const TemplateArray& ta, const CopyOp& copyop,
+                const std::pmr::polymorphic_allocator<T>& vectorAllocator,
+                const std::pmr::polymorphic_allocator<Array>& allocator = {}) :
+            Array(ta, copyop),
+            MixinVector<T>(ta, vectorAllocator) {}
 
         TemplateArray(unsigned int no) :
             Array(ARRAYTYPE,DataSize,DataType),
@@ -280,6 +285,14 @@ class TemplateArray : public Array, public MixinVector<T>
         virtual Object* cloneType() const { return new TemplateArray(); }
         virtual Object* clone(const CopyOp& copyop) const { return new TemplateArray(*this,copyop); }
 
+        TemplateArray* cloneWithAllocator(const CopyOp& copyOp, const std::shared_ptr<std::pmr::memory_resource>& memoryResource) const override {
+            std::pmr::polymorphic_allocator<Array> allocator(memoryResource.get());
+            const std::pmr::polymorphic_allocator<T> vectorAllocator(memoryResource.get());
+            TemplateArray* result = allocator.new_object<TemplateArray>(*this, copyOp, vectorAllocator);
+            result->setMemoryResource(memoryResource);
+            return result;
+        }
+
         inline virtual void accept(ArrayVisitor& av);
         inline virtual void accept(ConstArrayVisitor& av) const;
 
@@ -310,10 +323,6 @@ class TemplateArray : public Array, public MixinVector<T>
         virtual void resizeArray(unsigned int num) { this->resize(num); }
 
         typedef T ElementDataType; // expose T
-
-    protected:
-
-        virtual ~TemplateArray() {}
 };
 
 class OSG_EXPORT IndexArray : public Array
@@ -330,10 +339,6 @@ class OSG_EXPORT IndexArray : public Array
         virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const IndexArray*>(obj)!=NULL; }
 
         virtual unsigned int index(unsigned int pos) const = 0;
-
-    protected:
-
-        virtual ~IndexArray() {}
 };
 
 template<typename T, Array::Type ARRAYTYPE, int DataSize, int DataType>
@@ -346,6 +351,12 @@ class TemplateIndexArray : public IndexArray, public MixinVector<T>
         TemplateIndexArray(const TemplateIndexArray& ta,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
             IndexArray(ta,copyop),
             MixinVector<T>(ta) {}
+
+        TemplateIndexArray(const TemplateIndexArray& ta, const CopyOp& copyop,
+                const std::pmr::polymorphic_allocator<T>& vectorAllocator,
+                const std::pmr::polymorphic_allocator<Array>& allocator = {}) :
+            IndexArray(ta, copyop),
+            MixinVector<T>(ta, vectorAllocator) {}
 
         TemplateIndexArray(unsigned int no) :
             IndexArray(ARRAYTYPE,DataSize,DataType),
@@ -369,6 +380,14 @@ class TemplateIndexArray : public IndexArray, public MixinVector<T>
 
         virtual Object* cloneType() const { return new TemplateIndexArray(); }
         virtual Object* clone(const CopyOp& copyop) const { return new TemplateIndexArray(*this,copyop); }
+
+        TemplateIndexArray* cloneWithAllocator(const CopyOp& copyOp, const std::shared_ptr<std::pmr::memory_resource>& memoryResource) const override {
+            std::pmr::polymorphic_allocator<Array> allocator(memoryResource.get());
+            const std::pmr::polymorphic_allocator<T> vectorAllocator(memoryResource.get());
+            TemplateIndexArray* result = allocator.new_object<TemplateIndexArray>(*this, copyOp, vectorAllocator);
+            result->setMemoryResource(memoryResource);
+            return result;
+        }
 
         inline virtual void accept(ArrayVisitor& av);
         inline virtual void accept(ConstArrayVisitor& av) const;
@@ -402,10 +421,6 @@ class TemplateIndexArray : public IndexArray, public MixinVector<T>
         virtual unsigned int    index(unsigned int pos) const { return (*this)[pos]; }
 
         typedef T ElementDataType; // expose T
-
-    protected:
-
-        virtual ~TemplateIndexArray() {}
 };
 
 // The predefined array types

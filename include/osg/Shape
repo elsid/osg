@@ -489,7 +489,7 @@ class OSG_EXPORT HeightField : public Shape
 
         META_Shape(osg, HeightField);
 
-        typedef std::vector<float> HeightList;
+        typedef std::pmr::vector<float> HeightList;
 
         void allocate(unsigned int numColumns,unsigned int numRows);
 

@@ -473,7 +473,7 @@ void daeReader::processSinglePPrimitive(osg::Geode* geode,
     resolveMeshArrays(domPArray, group->getInput_array(), pDomMesh, geometry.get(), sources, indexLists);
     if (!indexLists.front().empty())
     {
-        pDrawElements->asVector().swap(indexLists.front());
+        pDrawElements->asVector().assign(indexLists.front().begin(), indexLists.front().end());
         geode->addDrawable( geometry.get() );
     }
 }
@@ -495,7 +495,7 @@ void daeReader::processMultiPPrimitive(osg::Geode* geode,
     {
         osg::DrawElementsUInt* pDrawElements = new osg::DrawElementsUInt(mode);
         geometry->addPrimitiveSet(pDrawElements);
-        pDrawElements->asVector().swap(indexLists[i]);
+        pDrawElements->asVector().assign(indexLists[i].begin(), indexLists[i].end());
     }
 }
 

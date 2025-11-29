@@ -20,6 +20,9 @@
 #include <OpenThreads/Mutex>
 #include <OpenThreads/Atomic>
 
+#include <memory>
+#include <memory_resource>
+
 #define _OSG_REFERENCED_USE_ATOMIC_OPERATIONS
 
 namespace osg {
@@ -50,6 +53,8 @@ class OSG_EXPORT Referenced
         explicit Referenced(bool threadSafeRefUnref);
 
         Referenced(const Referenced&);
+
+        virtual ~Referenced();
 
         inline Referenced& operator = (const Referenced&) { return *this; }
 
@@ -133,10 +138,22 @@ public:
         /** Get a DeleteHandler.*/
         static DeleteHandler* getDeleteHandler();
 
+        const std::shared_ptr<std::pmr::memory_resource>& getMemoryResource() const
+        {
+            return _memoryResource;
+        }
+
+        void setMemoryResource(const std::shared_ptr<std::pmr::memory_resource>& value)
+        {
+            _memoryResource = value;
+        }
+
+        void setMemoryResource(std::shared_ptr<std::pmr::memory_resource>&& value)
+        {
+            _memoryResource = std::move(value);
+        }
 
     protected:
-
-        virtual ~Referenced();
 
         void signalObserversAndDelete(bool signalDelete, bool doDelete) const;
 
@@ -154,6 +171,8 @@ public:
 
         mutable void*                   _observerSet;
 #endif
+
+        std::shared_ptr<std::pmr::memory_resource> _memoryResource;
 };
 
 inline int Referenced::ref() const

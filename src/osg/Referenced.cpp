@@ -288,8 +288,20 @@ void Referenced::signalObserversAndDelete(bool signalDelete, bool doDelete) cons
         if (_refCount!=0)
             OSG_NOTICE<<"Warning Referenced::signalObserversAndDelete(,,) doing delete with _refCount="<<_refCount<<std::endl;
 
-        if (getDeleteHandler()) deleteUsingDeleteHandler();
-        else delete this;
+        if (getDeleteHandler())
+        {
+            deleteUsingDeleteHandler();
+        }
+        else if (_memoryResource != nullptr)
+        {
+            const std::shared_ptr<std::pmr::memory_resource> memoryResource = std::move(_memoryResource);
+            std::pmr::polymorphic_allocator<osg::Referenced> allocator(memoryResource.get());
+            allocator.delete_object(const_cast<osg::Referenced*>(this));
+        }
+        else
+        {
+            delete this;
+        }
     }
 }
 

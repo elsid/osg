@@ -27,8 +27,8 @@ namespace osg {
 template<class ValueT>
 class MixinVector
 {
-    typedef typename std::vector<ValueT> vector_type;
 public:
+    typedef typename std::pmr::vector<ValueT> vector_type;
     typedef typename vector_type::allocator_type allocator_type;
     typedef typename vector_type::value_type value_type;
     typedef typename vector_type::const_pointer const_pointer;
@@ -67,6 +67,11 @@ public:
     {
     }
 
+    MixinVector(const MixinVector& other, const allocator_type& allocator)
+    : _impl(other._impl, allocator)
+    {
+    }
+
     MixinVector& operator=(const vector_type& other)
     {
         _impl = other;
@@ -79,7 +84,7 @@ public:
         return *this;
     }
 
-    virtual ~MixinVector() {}
+    virtual ~MixinVector() = default;
 
     void clear() { _impl.clear(); }
     void resize(size_type new_size, const value_type& fill_value = value_type()) { _impl.resize(new_size, fill_value); }
@@ -142,28 +147,28 @@ public:
     const vector_type& asVector() const { return _impl; }
 
     friend inline bool operator==(const MixinVector<ValueT>& left, const MixinVector<ValueT>& right) { return left._impl == right._impl; }
-    friend inline bool operator==(const MixinVector<ValueT>& left, const std::vector<ValueT>& right) { return left._impl == right; }
-    friend inline bool operator==(const std::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left == right._impl; }
+    friend inline bool operator==(const MixinVector<ValueT>& left, const std::pmr::vector<ValueT>& right) { return left._impl == right; }
+    friend inline bool operator==(const std::pmr::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left == right._impl; }
 
     friend inline bool operator!=(const MixinVector<ValueT>& left, const MixinVector<ValueT>& right) { return left._impl != right._impl; }
-    friend inline bool operator!=(const MixinVector<ValueT>& left, const std::vector<ValueT>& right) { return left._impl != right; }
-    friend inline bool operator!=(const std::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left != right._impl; }
+    friend inline bool operator!=(const MixinVector<ValueT>& left, const std::pmr::vector<ValueT>& right) { return left._impl != right; }
+    friend inline bool operator!=(const std::pmr::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left != right._impl; }
 
     friend inline bool operator<(const MixinVector<ValueT>& left, const MixinVector<ValueT>& right) { return left._impl < right._impl; }
-    friend inline bool operator<(const MixinVector<ValueT>& left, const std::vector<ValueT>& right) { return left._impl < right; }
-    friend inline bool operator<(const std::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left < right._impl; }
+    friend inline bool operator<(const MixinVector<ValueT>& left, const std::pmr::vector<ValueT>& right) { return left._impl < right; }
+    friend inline bool operator<(const std::pmr::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left < right._impl; }
 
     friend inline bool operator>(const MixinVector<ValueT>& left, const MixinVector<ValueT>& right) { return left._impl > right._impl; }
-    friend inline bool operator>(const MixinVector<ValueT>& left, const std::vector<ValueT>& right) { return left._impl > right; }
-    friend inline bool operator>(const std::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left > right._impl; }
+    friend inline bool operator>(const MixinVector<ValueT>& left, const std::pmr::vector<ValueT>& right) { return left._impl > right; }
+    friend inline bool operator>(const std::pmr::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left > right._impl; }
 
     friend inline bool operator<=(const MixinVector<ValueT>& left, const MixinVector<ValueT>& right) { return left._impl <= right._impl; }
-    friend inline bool operator<=(const MixinVector<ValueT>& left, const std::vector<ValueT>& right) { return left._impl <= right; }
-    friend inline bool operator<=(const std::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left <= right._impl; }
+    friend inline bool operator<=(const MixinVector<ValueT>& left, const std::pmr::vector<ValueT>& right) { return left._impl <= right; }
+    friend inline bool operator<=(const std::pmr::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left <= right._impl; }
 
     friend inline bool operator>=(const MixinVector<ValueT>& left, const MixinVector<ValueT>& right) { return left._impl >= right._impl; }
-    friend inline bool operator>=(const MixinVector<ValueT>& left, const std::vector<ValueT>& right) { return left._impl >= right; }
-    friend inline bool operator>=(const std::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left >= right._impl; }
+    friend inline bool operator>=(const MixinVector<ValueT>& left, const std::pmr::vector<ValueT>& right) { return left._impl >= right; }
+    friend inline bool operator>=(const std::pmr::vector<ValueT>& left, const MixinVector<ValueT>& right) { return left >= right._impl; }
 
 private:
     vector_type _impl;
@@ -180,14 +185,14 @@ swap(MixinVector<ValueT>& left,
 template<class ValueT> inline
 void
 swap(MixinVector<ValueT>& left,
-     std::vector<ValueT>& right)
+     std::pmr::vector<ValueT>& right)
 {
     std::swap(left.asVector(), right);
 }
 
 template<class ValueT> inline
 void
-swap(std::vector<ValueT>& left,
+swap(std::pmr::vector<ValueT>& left,
      MixinVector<ValueT>& right)
 {
     std::swap(left, right.asVector());

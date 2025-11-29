@@ -513,6 +513,8 @@ class OSG_EXPORT BufferData : public Object
             _modifiedCallback(bd._modifiedCallback),
             _numClients(0) {}
 
+        virtual ~BufferData();
+
         virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const BufferData*>(obj)!=NULL; }
         virtual const char* libraryName() const { return "osg"; }
         virtual const char* className() const { return "BufferData"; }
@@ -585,9 +587,6 @@ class OSG_EXPORT BufferData : public Object
         void removeClient(osg::Object * /*client*/) { --_numClients; }
 
 protected:
-
-        virtual ~BufferData();
-
         unsigned int                    _modifiedCount;
 
         unsigned int                    _bufferIndex;
@@ -616,9 +615,6 @@ class OSG_EXPORT VertexBufferObject : public BufferObject
         void setArray(unsigned int i, Array* array);
         Array* getArray(unsigned int i);
         const Array* getArray(unsigned int i) const;
-
-    protected:
-        virtual ~VertexBufferObject();
 };
 
 class DrawElements;
