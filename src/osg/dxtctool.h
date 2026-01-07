@@ -79,6 +79,8 @@ bool isDXTC(GLenum pixelFormat);
 
 bool isRGTC(GLenum pixelFormat);
 
+bool isBPTC(GLenum pixelFormat);
+
 bool VerticalFlip(size_t Width, size_t Height, GLenum Format, void * pPixels);
 
 bool isCompressedImageTranslucent(size_t Width, size_t Height, GLenum Format, void * pPixels);
@@ -112,6 +114,7 @@ protected:
     inline bool DXT5() const;
     inline bool RGTC1() const;
     inline bool RGTC2() const;
+    inline bool BPTC() const;
     inline bool OpenGLSize() const;
     inline bool SupportedFormat() const;
 
@@ -191,6 +194,20 @@ inline bool isRGTC(GLenum pixelFormat)
     }
 }
 
+inline bool isBPTC(GLenum pixelFormat)
+{
+    switch(pixelFormat)
+    {
+        case(0x8E8C): // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case(0x8E8D): // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case(0x8E8E): // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case(0x8E8F): // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
+            return true;
+        default:
+            return false;
+    }
+}
+
 inline bool VerticalFlip(size_t Width, size_t Height, GLenum Format, void * pPixels) {
     return (dxtc_pixels(Width, Height, Format, pPixels)).VFlip();
 }
@@ -228,9 +245,13 @@ inline bool dxtc_pixels::RGTC2() const {
     return ((m_Format == GL_COMPRESSED_RED_GREEN_RGTC2_EXT) || (m_Format == GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT));
 }
 
+inline bool dxtc_pixels::BPTC() const {
+    return isBPTC(m_Format);
+}
+
 
 inline bool dxtc_pixels::SupportedFormat() const {
-    return (DXT1() || DXT3() || DXT5() || RGTC1() || RGTC2());
+    return (DXT1() || DXT3() || DXT5() || RGTC1() || RGTC2() || BPTC());
 }
 
 

@@ -814,6 +814,34 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
                     pixelFormat    = GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT;
                     break;
 
+                case OSG_DXGI_FORMAT_BC6H_UF16:
+                    internalFormat = 0x8E8F; // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
+                    pixelFormat    = 0x8E8F;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    isDXTC = true;
+                    break;
+
+                case OSG_DXGI_FORMAT_BC6H_SF16:
+                    internalFormat = 0x8E8E; // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+                    pixelFormat    = 0x8E8E;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    isDXTC = true;
+                    break;
+
+                case OSG_DXGI_FORMAT_BC7_UNORM:
+                    internalFormat = 0x8E8C; // GL_COMPRESSED_RGBA_BPTC_UNORM
+                    pixelFormat    = 0x8E8C;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    isDXTC = true;
+                    break;
+
+                case OSG_DXGI_FORMAT_BC7_UNORM_SRGB:
+                    internalFormat = 0x8E8D; // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+                    pixelFormat    = 0x8E8D;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    isDXTC = true;
+                    break;
+
                 default:
                     OSG_WARN << "ReadDDSFile warning: unhandled DX10 pixel format 0x"
                              << std::hex << std::setw(8) << std::setfill('0')

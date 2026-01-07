@@ -74,6 +74,8 @@ bool dxtc_pixels::VFlip() const
         VFlip_RGTC1();
     else if (RGTC2())
         VFlip_RGTC2();
+    else if (BPTC())
+        return true; // BPTC cannot be flipped in-place; images should be pre-flipped
     else
         return false; // We should never get there
 

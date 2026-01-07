@@ -707,6 +707,11 @@ unsigned int Image::computeNumComponents(GLenum pixelFormat)
         case (GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR) : return 4;
         case (GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR) : return 4;
         case (GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR) : return 4;
+        // BPTC (BC6H/BC7)
+        case (0x8E8C) : return 4; // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case (0x8E8D) : return 4; // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case (0x8E8E) : return 3; // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case (0x8E8F) : return 3; // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
         default:
         {
             OSG_WARN<<"error pixelFormat = "<<std::hex<<pixelFormat<<std::dec<<std::endl;
@@ -733,6 +738,11 @@ unsigned int Image::computePixelSizeInBits(GLenum format,GLenum type)
         case(GL_COMPRESSED_RED_RGTC1_EXT):   return 4;
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT): return 8;
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT): return 8;
+        // BPTC (BC6H/BC7) - 128 bits per 4x4 block = 8 bits per pixel
+        case(0x8E8C): return 8; // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case(0x8E8D): return 8; // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case(0x8E8E): return 8; // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case(0x8E8F): return 8; // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
         case(GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG): return 4;
         case(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG): return 2;
         case(GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG): return 4;
@@ -892,6 +902,11 @@ osg::Vec3i Image::computeBlockFootprint(GLenum pixelFormat)
         case(GL_COMPRESSED_RED_RGTC1_EXT) :
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT) :
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT) :
+        // BPTC (BC6H/BC7) - 4x4 blocks
+        case(0x8E8C) : // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case(0x8E8D) : // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case(0x8E8E) : // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case(0x8E8F) : // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
         case(GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG) :
         case(GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG) :
         case(GL_ETC1_RGB8_OES) :
@@ -971,6 +986,13 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT):
             return osg::maximum(16u,packing); // block size of 16
 
+        // BPTC (BC6H/BC7) - 16 bytes per block
+        case(0x8E8C): // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case(0x8E8D): // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case(0x8E8E): // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case(0x8E8F): // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
+            return osg::maximum(16u,packing); // block size of 16
+
         case(GL_COMPRESSED_RGB8_ETC2):
         case(GL_COMPRESSED_SRGB8_ETC2):
         case(GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2):
@@ -1021,6 +1043,16 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
 
 unsigned int Image::computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing)
 {
+    // Handle block-compressed formats (S3TC, RGTC, BPTC, etc.)
+    int blockSize = computeBlockSize(pixelFormat, 0);
+    if (blockSize > 0) {
+        osg::Vec3i footprint = computeBlockFootprint(pixelFormat);
+        int blocksWide = (width + footprint.x() - 1) / footprint.x();
+        unsigned int size = blockSize * blocksWide;
+        return roudUpToMultiple(size, packing);
+    }
+
+    // Non-compressed formats
     unsigned int pixelSize = computePixelSizeInBits(pixelFormat,type);
     int widthInBits = width*pixelSize;
     int packingInBits = packing!=0 ? packing*8 : 8;
@@ -1827,6 +1859,7 @@ void Image::flipVertical()
 
     const bool dxtc(dxtc_tool::isDXTC(_pixelFormat));
     const bool rgtc(dxtc_tool::isRGTC(_pixelFormat));
+    const bool bptc(dxtc_tool::isBPTC(_pixelFormat));
 
     if (_mipmapData.empty())
     {
@@ -1834,7 +1867,7 @@ void Image::flipVertical()
         // so we can safely handle 3d textures
         for(int r=0;r<_r;++r)
         {
-            if (dxtc || rgtc)
+            if (dxtc || rgtc || bptc)
             {
                 if (!dxtc_tool::VerticalFlip(_s,_t,_pixelFormat,data(0,0,r)))
                 {
@@ -1854,7 +1887,7 @@ void Image::flipVertical()
     }
     else if (_r==1)
     {
-        if (dxtc || rgtc)
+        if (dxtc || rgtc || bptc)
         {
             if (!dxtc_tool::VerticalFlip(_s,_t,_pixelFormat,_data))
             {
@@ -1881,7 +1914,7 @@ void Image::flipVertical()
             t >>= 1;
             if (s==0) s=1;
             if (t==0) t=1;
-            if (dxtc || rgtc)
+            if (dxtc || rgtc || bptc)
             {
                 if (!dxtc_tool::VerticalFlip(s,t,_pixelFormat,_data+_mipmapData[i]))
                 {

@@ -188,10 +188,10 @@ InternalPixelRelations compressedInternalFormats[] = {
     , { GL_COMPRESSED_SIGNED_RED_RGTC1_EXT         , GL_RED          , GL_COMPRESSED_SIGNED_RED_RGTC1_EXT           }
  // , { GL_COMPRESSED_RG_RGTC2                     , GL_RG           , GL_COMPRESSED_RG_RGTC2                       }
  // , { GL_COMPRESSED_SIGNED_RG_RGTC2              , GL_RG           , GL_COMPRESSED_SIGNED_RG_RGTC2                }
- // , { GL_COMPRESSED_RGBA_BPTC_UNORM              , GL_RGBA         , GL_COMPRESSED_RGBA_BPTC_UNORM                }
- // , { GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM        , GL_RGBA         , GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM          }
- // , { GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT        , GL_RGB          , GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT          }
- // , { GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT      , GL_RGB          , GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT        }
+    , { 0x8E8C                                      , GL_RGBA         , 0x8E8C                                       } // GL_COMPRESSED_RGBA_BPTC_UNORM
+    , { 0x8E8D                                      , GL_RGBA         , 0x8E8D                                       } // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+    , { 0x8E8E                                      , GL_RGB          , 0x8E8E                                       } // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+    , { 0x8E8F                                      , GL_RGB          , 0x8E8F                                       } // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
 
     , { GL_COMPRESSED_RGB_S3TC_DXT1_EXT            , GL_RGB          , GL_COMPRESSED_RGB_S3TC_DXT1_EXT              }
     , { GL_COMPRESSED_RGBA_S3TC_DXT1_EXT           , GL_RGBA         , GL_COMPRESSED_RGBA_S3TC_DXT1_EXT             }
@@ -365,6 +365,12 @@ void Texture::TextureProfile::computeSize()
         case GL_COMPRESSED_RED_RGTC1_EXT:                  numBitsPerTexel = 4;  break;
         case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:     numBitsPerTexel = 8;  break;
         case GL_COMPRESSED_RED_GREEN_RGTC2_EXT:            numBitsPerTexel = 8;  break;
+
+        // BPTC (BC6H/BC7)
+        case 0x8E8C:                                       numBitsPerTexel = 8;  break; // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case 0x8E8D:                                       numBitsPerTexel = 8;  break; // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case 0x8E8E:                                       numBitsPerTexel = 8;  break; // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case 0x8E8F:                                       numBitsPerTexel = 8;  break; // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
 
         case GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:           numBitsPerTexel = 2;  break;
         case GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG:          numBitsPerTexel = 2;  break;
@@ -1888,6 +1894,11 @@ bool Texture::isCompressedInternalFormat(GLint internalFormat)
         case (GL_COMPRESSED_RED_RGTC1_EXT):
         case (GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT):
         case (GL_COMPRESSED_RED_GREEN_RGTC2_EXT):
+        // BPTC (BC6H/BC7)
+        case (0x8E8C): // GL_COMPRESSED_RGBA_BPTC_UNORM
+        case (0x8E8D): // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+        case (0x8E8E): // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+        case (0x8E8F): // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
         case (GL_ETC1_RGB8_OES):
         case (GL_COMPRESSED_RGB8_ETC2):
         case (GL_COMPRESSED_SRGB8_ETC2):
@@ -1958,6 +1969,9 @@ void Texture::getCompressedSize(GLenum internalFormat, GLint width, GLint height
     else if (internalFormat == GL_COMPRESSED_RED_RGTC1_EXT || internalFormat == GL_COMPRESSED_SIGNED_RED_RGTC1_EXT)
         blockSize = 8;
     else if (internalFormat == GL_COMPRESSED_RED_GREEN_RGTC2_EXT || internalFormat == GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT)
+        blockSize = 16;
+    // BPTC (BC6H/BC7) - 128 bits per block
+    else if (internalFormat == 0x8E8C || internalFormat == 0x8E8D || internalFormat == 0x8E8E || internalFormat == 0x8E8F)
         blockSize = 16;
     else if (internalFormat == GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG || internalFormat == GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG)
     {
@@ -2387,6 +2401,11 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
             case(GL_COMPRESSED_SIGNED_RG11_EAC):
             case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
             case GL_COMPRESSED_RED_GREEN_RGTC2_EXT: _internalFormat = GL_RG; break;
+            // BPTC (BC6H/BC7)
+            case 0x8E8C: // GL_COMPRESSED_RGBA_BPTC_UNORM
+            case 0x8E8D: _internalFormat = GL_RGBA; break; // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+            case 0x8E8E: // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
+            case 0x8E8F: _internalFormat = GL_RGB; break; // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
         }
     }
 
