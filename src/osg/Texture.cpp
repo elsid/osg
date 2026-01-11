@@ -60,6 +60,17 @@
     #define CHECK_CONSISTENCY
 #endif
 
+namespace {
+    template <class Iterator, class Map>
+    Iterator eraseIfEmpty(Iterator it, Map& map)
+    {
+        if (it->second->getNumOfTextureObjects() == 0)
+            return map.erase(it);
+        return ++it;
+    }
+}
+
+
 namespace osg {
 
 ApplicationUsageProxy Texture_e0(ApplicationUsage::ENVIRONMENTAL_VARIABLE,"OSG_MAX_TEXTURE_SIZE","Set the maximum size of textures.");
@@ -1153,10 +1164,10 @@ void TextureObjectManager::handlePendingOrphandedTextureObjects()
 void TextureObjectManager::deleteAllGLObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        itr != _textureSetMap.end();
-        ++itr)
+        itr != _textureSetMap.end();)
     {
         (*itr).second->deleteAllTextureObjects();
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
@@ -1168,35 +1179,36 @@ void TextureObjectManager::discardAllGLObjects()
     {
         (*itr).second->discardAllTextureObjects();
     }
+    _textureSetMap.clear();
 }
 
 void TextureObjectManager::flushAllDeletedGLObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        itr != _textureSetMap.end();
-        ++itr)
+        itr != _textureSetMap.end();)
     {
         (*itr).second->flushAllDeletedTextureObjects();
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
 void TextureObjectManager::discardAllDeletedGLObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        itr != _textureSetMap.end();
-        ++itr)
+        itr != _textureSetMap.end();)
     {
         (*itr).second->discardAllDeletedTextureObjects();
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
 void TextureObjectManager::flushDeletedGLObjects(double currentTime, double& availableTime)
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        (itr != _textureSetMap.end()) && (availableTime > 0.0);
-        ++itr)
+        (itr != _textureSetMap.end()) && (availableTime > 0.0);)
     {
         (*itr).second->flushDeletedTextureObjects(currentTime, availableTime);
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 

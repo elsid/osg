@@ -38,6 +38,19 @@
 
 using namespace osg;
 
+namespace
+{
+
+template <class Iterator, class Map>
+Iterator eraseIfEmpty(Iterator it, Map& map)
+{
+    if (it->second->getNumOfGLBufferObjects() == 0)
+        return map.erase(it);
+    return ++it;
+}
+
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // GLBufferObject::BufferEntry
@@ -937,10 +950,10 @@ void GLBufferObjectManager::deleteAllGLObjects()
     ElapsedTime elapsedTime(&(getDeleteTime()));
 
     for(GLBufferObjectSetMap::iterator itr = _glBufferObjectSetMap.begin();
-        itr != _glBufferObjectSetMap.end();
-        ++itr)
+        itr != _glBufferObjectSetMap.end();)
     {
         (*itr).second->deleteAllGLBufferObjects();
+        itr = eraseIfEmpty(itr, _glBufferObjectSetMap);
     }
 }
 
@@ -952,6 +965,7 @@ void GLBufferObjectManager::discardAllGLObjects()
     {
         (*itr).second->discardAllGLBufferObjects();
     }
+    _glBufferObjectSetMap.clear();
 }
 
 void GLBufferObjectManager::flushAllDeletedGLObjects()
@@ -959,20 +973,20 @@ void GLBufferObjectManager::flushAllDeletedGLObjects()
     ElapsedTime elapsedTime(&(getDeleteTime()));
 
     for(GLBufferObjectSetMap::iterator itr = _glBufferObjectSetMap.begin();
-        itr != _glBufferObjectSetMap.end();
-        ++itr)
+        itr != _glBufferObjectSetMap.end();)
     {
         (*itr).second->flushAllDeletedGLBufferObjects();
+        itr = eraseIfEmpty(itr, _glBufferObjectSetMap);
     }
 }
 
 void GLBufferObjectManager::discardAllDeletedGLObjects()
 {
     for(GLBufferObjectSetMap::iterator itr = _glBufferObjectSetMap.begin();
-        itr != _glBufferObjectSetMap.end();
-        ++itr)
+        itr != _glBufferObjectSetMap.end();)
     {
         (*itr).second->discardAllDeletedGLBufferObjects();
+        itr = eraseIfEmpty(itr, _glBufferObjectSetMap);
     }
 }
 
@@ -981,10 +995,10 @@ void GLBufferObjectManager::flushDeletedGLObjects(double currentTime, double& av
     ElapsedTime elapsedTime(&(getDeleteTime()));
 
     for(GLBufferObjectSetMap::iterator itr = _glBufferObjectSetMap.begin();
-        (itr != _glBufferObjectSetMap.end()) && (availableTime > 0.0);
-        ++itr)
+        (itr != _glBufferObjectSetMap.end()) && (availableTime > 0.0);)
     {
         (*itr).second->flushDeletedGLBufferObjects(currentTime, availableTime);
+        itr = eraseIfEmpty(itr, _glBufferObjectSetMap);
     }
 }
 
