@@ -25,6 +25,7 @@
 #include <osg/PrimitiveSet>
 #include <osg/Array>
 #include <osg/ContextData>
+#include <osg/Stats>
 
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Mutex>
@@ -1049,6 +1050,11 @@ void GLBufferObjectManager::recomputeStats(std::ostream& out) const
     }
     out<<"   numObjectsInLists="<<numObjectsInLists<<", numActive="<<numActive<<", numOrphans="<<numOrphans<<" currentSize="<<currentSize<<std::endl;
     out<<"   getMaxGLBufferObjectPoolSize()="<<getMaxGLBufferObjectPoolSize()<<" current/max size = "<<double(currentSize)/double(getMaxGLBufferObjectPoolSize())<<std::endl;
+}
+
+void GLBufferObjectManager::reportStats(unsigned frameNumber, Stats& stats) const
+{
+    stats.setAttribute(frameNumber, "GLBufferObjectManager" + std::to_string(_contextID), static_cast<double>(_glBufferObjectSetMap.size()));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -23,6 +23,7 @@ namespace osg {
 
 // forward declare
 class FrameStamp;
+class Stats;
 
 /** Flush all deleted OpenGL objects within the specified availableTime.
   * Note, must be called from a thread which has current the graphics context associated with contextID. */
@@ -66,6 +67,8 @@ class OSG_EXPORT GraphicsObjectManager : public osg::Referenced
         virtual void resetStats() {}
         virtual void reportStats(std::ostream& /*out*/)  {}
         virtual void recomputeStats(std::ostream& /*out*/) const  {}
+
+        virtual void reportStats(unsigned frameNumber, Stats& stats) const {}
 
 
         /** Flush all deleted OpenGL objects within the specified availableTime.
@@ -117,11 +120,13 @@ public:
     /** implementation of the actual deletion of an GL object - subclasses from GLObjectManager must implement the appropriate GL calls.*/
     virtual void deleteGLObject(GLuint globj) = 0;
 
+    void reportStats(unsigned frameNumber, Stats& stats) const override;
+
 protected:
     virtual ~GLObjectManager();
 
     typedef std::list<GLuint> GLObjectHandleList;
-    OpenThreads::Mutex  _mutex;
+    mutable OpenThreads::Mutex  _mutex;
     GLObjectHandleList _deleteGLObjectHandles;
 
 };

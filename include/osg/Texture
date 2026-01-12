@@ -1232,6 +1232,8 @@ public:
     void recomputeStats(std::ostream& out) const;
     bool checkConsistency() const;
 
+    void reportStats(unsigned frameNumber, Stats& stats) const override;
+
     unsigned int& getFrameNumber() { return _frameNumber; }
     unsigned int& getNumberFrames() { return _numFrames; }
 

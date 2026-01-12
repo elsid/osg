@@ -1289,6 +1289,11 @@ bool TextureObjectManager::checkConsistency() const
     return true;
 }
 
+void TextureObjectManager::reportStats(unsigned frameNumber, Stats& stats) const
+{
+    stats.setAttribute(frameNumber, "TextureObjectManager" + std::to_string(_contextID), static_cast<double>(_textureSetMap.size()));
+}
+
 osg::ref_ptr<Texture::TextureObject> Texture::generateTextureObject(const Texture* texture, unsigned int contextID, GLenum target)
 {
     return osg::get<TextureObjectManager>(contextID)->generateTextureObject(texture, target);
