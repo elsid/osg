@@ -1129,15 +1129,30 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
     if (mipmap_offsets.size()>0) osgImage->setMipmapLevels(mipmap_offsets);
 
     if (flipDDSRead) {
-        osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
-        if (!isDXTC || ((s>4 && s%4==0 && t>4 && t%4==0) || s<=4)) // Flip may crash (access violation) or fail for non %4 dimensions (except for s<4). Tested with revision trunk 2013-02-22.
-        {
-            OSG_INFO<<"Flipping dds on load"<<std::endl;
-            osgImage->flipVertical();
+        // BC6H and BC7 formats cannot be flipped in compressed form due to their complex
+        // block encoding (partitions, anchor indices). Mark them as TOP_LEFT origin so
+        // the engine can apply UV flip at render time instead.
+        bool isBC6H_BC7 = (internalFormat == 0x8E8C ||  // GL_COMPRESSED_RGBA_BPTC_UNORM (BC7)
+                          internalFormat == 0x8E8D ||  // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM (BC7 sRGB)
+                          internalFormat == 0x8E8E ||  // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT (BC6H SF16)
+                          internalFormat == 0x8E8F);   // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT (BC6H UF16)
+
+        if (isBC6H_BC7) {
+            // Don't flip BC6H/BC7 - mark as TOP_LEFT for runtime UV compensation
+            osgImage->setOrigin(osg::Image::TOP_LEFT);
+            OSG_INFO << "ReadDDSFile info: BC6H/BC7 texture kept in TOP_LEFT orientation (no flip)" << std::endl;
         }
-        else
-        {
-            OSG_WARN << "ReadDDSFile warning: Vertical flip was skipped. Image dimensions have to be multiple of 4." << std::endl;
+        else {
+            osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
+            if (!isDXTC || ((s>4 && s%4==0 && t>4 && t%4==0) || s<=4)) // Flip may crash (access violation) or fail for non %4 dimensions (except for s<4). Tested with revision trunk 2013-02-22.
+            {
+                OSG_INFO<<"Flipping dds on load"<<std::endl;
+                osgImage->flipVertical();
+            }
+            else
+            {
+                OSG_WARN << "ReadDDSFile warning: Vertical flip was skipped. Image dimensions have to be multiple of 4." << std::endl;
+            }
         }
     }
 
