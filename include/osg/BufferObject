@@ -272,6 +272,7 @@ class OSG_EXPORT GLBufferObject : public GraphicsObject
 };
 
 typedef std::list< ref_ptr<GLBufferObject> > GLBufferObjectList;
+typedef std::vector<ref_ptr<GLBufferObject>> GLBufferObjectVector;
 
 class OSG_EXPORT GLBufferObjectSet : public Referenced
 {
@@ -322,7 +323,7 @@ class OSG_EXPORT GLBufferObjectSet : public Referenced
         BufferObjectProfile     _profile;
         unsigned int            _numOfGLBufferObjects;
         GLBufferObjectList      _orphanedGLBufferObjects;
-        GLBufferObjectList      _pendingOrphanedGLBufferObjects;
+        GLBufferObjectVector    _pendingOrphanedGLBufferObjects;
 
         GLBufferObject*         _head;
         GLBufferObject*         _tail;

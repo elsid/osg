@@ -365,7 +365,7 @@ void GLBufferObjectSet::handlePendingOrphandedGLBufferObjects()
 
     unsigned int numOrphaned = _pendingOrphanedGLBufferObjects.size();
 
-    for(GLBufferObjectList::iterator itr = _pendingOrphanedGLBufferObjects.begin();
+    for(GLBufferObjectVector::iterator itr = _pendingOrphanedGLBufferObjects.begin();
         itr != _pendingOrphanedGLBufferObjects.end();
         ++itr)
     {

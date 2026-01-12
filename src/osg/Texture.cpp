@@ -530,7 +530,7 @@ void TextureObjectSet::handlePendingOrphandedTextureObjects()
 
     unsigned int numOrphaned = _pendingOrphanedTextureObjects.size();
 
-    for(Texture::TextureObjectList::iterator itr = _pendingOrphanedTextureObjects.begin();
+    for(TextureObjectVector::iterator itr = _pendingOrphanedTextureObjects.begin();
         itr != _pendingOrphanedTextureObjects.end();
         ++itr)
     {

@@ -1166,6 +1166,7 @@ public:
     unsigned int getNumPendingOrphans() const { return static_cast<unsigned int>(_pendingOrphanedTextureObjects.size()); }
 
 protected:
+    typedef std::vector<ref_ptr<Texture::TextureObject>> TextureObjectVector;
 
     virtual ~TextureObjectSet();
 
@@ -1176,7 +1177,7 @@ protected:
     Texture::TextureProfile     _profile;
     unsigned int                _numOfTextureObjects;
     Texture::TextureObjectList  _orphanedTextureObjects;
-    Texture::TextureObjectList  _pendingOrphanedTextureObjects;
+    TextureObjectVector         _pendingOrphanedTextureObjects;
 
     Texture::TextureObject*     _head;
     Texture::TextureObject*     _tail;
