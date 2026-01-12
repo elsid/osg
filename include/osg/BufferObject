@@ -323,6 +323,7 @@ class OSG_EXPORT GLBufferObjectSet : public Referenced
         BufferObjectProfile     _profile;
         unsigned int            _numOfGLBufferObjects;
         GLBufferObjectList      _orphanedGLBufferObjects;
+        OpenThreads::Atomic     _pendingOrphanedGLBufferObjectsSize;
         GLBufferObjectVector    _pendingOrphanedGLBufferObjects;
 
         GLBufferObject*         _head;

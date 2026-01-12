@@ -382,6 +382,7 @@ void GLBufferObjectSet::handlePendingOrphandedGLBufferObjects()
     _parent->getNumberActiveGLBufferObjects() -= numOrphaned;
 
     _pendingOrphanedGLBufferObjects.clear();
+    _pendingOrphanedGLBufferObjectsSize.exchange(0);
 
     CHECK_CONSISTENCY
 }
@@ -390,6 +391,7 @@ void GLBufferObjectSet::deleteAllGLBufferObjects()
 {
     // OSG_NOTICE<<"GLBufferObjectSet::deleteAllGLBufferObjects()"<<std::endl;
 
+    if (_pendingOrphanedGLBufferObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
@@ -466,6 +468,7 @@ void GLBufferObjectSet::discardAllGLBufferObjects()
 
 void GLBufferObjectSet::flushAllDeletedGLBufferObjects()
 {
+    if (_pendingOrphanedGLBufferObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
@@ -495,6 +498,7 @@ void GLBufferObjectSet::discardAllDeletedGLBufferObjects()
     // OSG_NOTICE<<"GLBufferObjectSet::discardAllDeletedGLBufferObjects()"<<std::endl;
 
     // clean up the pending orphans.
+    if (_pendingOrphanedGLBufferObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
@@ -519,6 +523,7 @@ void GLBufferObjectSet::discardAllDeletedGLBufferObjects()
 
 void GLBufferObjectSet::flushDeletedGLBufferObjects(double /*currentTime*/, double& availableTime)
 {
+    if (_pendingOrphanedGLBufferObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
@@ -794,6 +799,7 @@ void GLBufferObjectSet::orphan(GLBufferObject* to)
     // list.  This double buffered approach to handling orphaned TO's is used
     // to avoid having to mutex the process of appling active TO's.
     _pendingOrphanedGLBufferObjects.push_back(to);
+    ++_pendingOrphanedGLBufferObjectsSize;
 }
 
 void GLBufferObjectSet::remove(GLBufferObject* to)

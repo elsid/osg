@@ -547,6 +547,7 @@ void TextureObjectSet::handlePendingOrphandedTextureObjects()
     _parent->getNumberActiveTextureObjects() -= numOrphaned;
 
     _pendingOrphanedTextureObjects.clear();
+    _pendingOrphanedTextureObjectsSize.exchange(0);
 
     CHECK_CONSISTENCY
 }
@@ -556,6 +557,7 @@ void TextureObjectSet::deleteAllTextureObjects()
 {
     // OSG_NOTICE<<"TextureObjectSet::deleteAllTextureObjects()"<<std::endl;
 
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
@@ -619,6 +621,7 @@ void TextureObjectSet::discardAllTextureObjects()
     _tail = 0;
 
     _pendingOrphanedTextureObjects.clear();
+    _pendingOrphanedTextureObjectsSize.exchange(0);
     _orphanedTextureObjects.clear();
 
     unsigned int numDeleted = _numOfTextureObjects;
@@ -633,6 +636,7 @@ void TextureObjectSet::discardAllTextureObjects()
 void TextureObjectSet::flushAllDeletedTextureObjects()
 {
     // OSG_NOTICE<<"TextureObjectSet::flushAllDeletedTextureObjects()"<<std::endl;
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
@@ -666,6 +670,7 @@ void TextureObjectSet::discardAllDeletedTextureObjects()
     // OSG_NOTICE<<"TextureObjectSet::discardAllDeletedTextureObjects()"<<std::endl;
 
     // clean up the pending orphans.
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
@@ -691,6 +696,7 @@ void TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*/, double
 {
     // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..)"<<std::endl;
 
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
@@ -756,6 +762,7 @@ void TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*/, double
 
 bool TextureObjectSet::makeSpace(unsigned int& size)
 {
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         // OSG_NOTICE<<"TextureObjectSet::TextureObjectSet::makeSpace(..) handling orphans"<<std::endl;
@@ -980,6 +987,7 @@ void TextureObjectSet::orphan(Texture::TextureObject* to)
     // list.  This double buffered approach to handling orphaned TO's is used
     // to avoid having to mutex the process of appling active TO's.
     _pendingOrphanedTextureObjects.push_back(to);
+    ++_pendingOrphanedTextureObjectsSize;
 
 #if 0
     OSG_NOTICE<<"TextureObjectSet::orphan("<<to<<")  _pendingOrphanedTextureObjects.size()="<<_pendingOrphanedTextureObjects.size()<<std::endl;
