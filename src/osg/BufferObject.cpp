@@ -392,11 +392,8 @@ void GLBufferObjectSet::deleteAllGLBufferObjects()
 
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedGLBufferObjects.empty())
-        {
-            // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedGLBufferObjects();
-        }
+        // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedGLBufferObjects();
     }
 
     CHECK_CONSISTENCY
@@ -471,11 +468,8 @@ void GLBufferObjectSet::flushAllDeletedGLBufferObjects()
 {
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedGLBufferObjects.empty())
-        {
-            // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedGLBufferObjects();
-        }
+        // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedGLBufferObjects();
     }
 
     for(GLBufferObjectList::iterator itr = _orphanedGLBufferObjects.begin();
@@ -503,11 +497,8 @@ void GLBufferObjectSet::discardAllDeletedGLBufferObjects()
     // clean up the pending orphans.
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedGLBufferObjects.empty())
-        {
-            // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedGLBufferObjects();
-        }
+        // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedGLBufferObjects();
     }
 
     unsigned int numDiscarded = _orphanedGLBufferObjects.size();
@@ -530,11 +521,8 @@ void GLBufferObjectSet::flushDeletedGLBufferObjects(double /*currentTime*/, doub
 {
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedGLBufferObjects.empty())
-        {
-            // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedGLBufferObjects();
-        }
+        // OSG_NOTICE<<"GLBufferObjectSet::flushDeletedGLBufferObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedGLBufferObjects();
     }
 
     if (_parent->getCurrGLBufferObjectPoolSize()<=_parent->getMaxGLBufferObjectPoolSize())
@@ -588,11 +576,8 @@ bool GLBufferObjectSet::makeSpace(unsigned int& size)
 {
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedGLBufferObjects.empty())
-        {
-            // OSG_NOTICE<<"GLBufferSet::::makeSpace(..) handling orphans"<<std::endl;
-            handlePendingOrphandedGLBufferObjects();
-        }
+        // OSG_NOTICE<<"GLBufferSet::::makeSpace(..) handling orphans"<<std::endl;
+        handlePendingOrphandedGLBufferObjects();
     }
 
     if (!_orphanedGLBufferObjects.empty())
