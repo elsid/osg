@@ -198,10 +198,10 @@ inline bool isBPTC(GLenum pixelFormat)
 {
     switch(pixelFormat)
     {
-        case(0x8E8C): // GL_COMPRESSED_RGBA_BPTC_UNORM
-        case(0x8E8D): // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
-        case(0x8E8E): // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
-        case(0x8E8F): // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
+        case(GL_COMPRESSED_RGBA_BPTC_UNORM):
+        case(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM):
+        case(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT):
+        case(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT):
             return true;
         default:
             return false;

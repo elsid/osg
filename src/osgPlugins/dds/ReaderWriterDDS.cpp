@@ -815,29 +815,29 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
                     break;
 
                 case OSG_DXGI_FORMAT_BC6H_UF16:
-                    internalFormat = 0x8E8F; // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
-                    pixelFormat    = 0x8E8F;
+                    internalFormat = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+                    pixelFormat    = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
                     isDXTC = true;
                     break;
 
                 case OSG_DXGI_FORMAT_BC6H_SF16:
-                    internalFormat = 0x8E8E; // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT
-                    pixelFormat    = 0x8E8E;
+                    internalFormat = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+                    pixelFormat    = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
                     isDXTC = true;
                     break;
 
                 case OSG_DXGI_FORMAT_BC7_UNORM:
-                    internalFormat = 0x8E8C; // GL_COMPRESSED_RGBA_BPTC_UNORM
-                    pixelFormat    = 0x8E8C;
+                    internalFormat = GL_COMPRESSED_RGBA_BPTC_UNORM;
+                    pixelFormat    = GL_COMPRESSED_RGBA_BPTC_UNORM;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
                     isDXTC = true;
                     break;
 
                 case OSG_DXGI_FORMAT_BC7_UNORM_SRGB:
-                    internalFormat = 0x8E8D; // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
-                    pixelFormat    = 0x8E8D;
+                    internalFormat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+                    pixelFormat    = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
                     isDXTC = true;
                     break;
@@ -1129,18 +1129,15 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
     if (mipmap_offsets.size()>0) osgImage->setMipmapLevels(mipmap_offsets);
 
     if (flipDDSRead) {
-        // BC6H and BC7 formats cannot be flipped in compressed form due to their complex
-        // block encoding (partitions, anchor indices). Mark them as TOP_LEFT origin so
-        // the engine can apply UV flip at render time instead.
-        bool isBC6H_BC7 = (internalFormat == 0x8E8C ||  // GL_COMPRESSED_RGBA_BPTC_UNORM (BC7)
-                          internalFormat == 0x8E8D ||  // GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM (BC7 sRGB)
-                          internalFormat == 0x8E8E ||  // GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT (BC6H SF16)
-                          internalFormat == 0x8E8F);   // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT (BC6H UF16)
+        // BC6H/BC7 (BPTC) cannot be flipped in compressed form - mark as TOP_LEFT for runtime UV flip
+        bool isBPTC = (internalFormat == GL_COMPRESSED_RGBA_BPTC_UNORM ||
+                       internalFormat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM ||
+                       internalFormat == GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT ||
+                       internalFormat == GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT);
 
-        if (isBC6H_BC7) {
-            // Don't flip BC6H/BC7 - mark as TOP_LEFT for runtime UV compensation
+        if (isBPTC) {
             osgImage->setOrigin(osg::Image::TOP_LEFT);
-            OSG_INFO << "ReadDDSFile info: BC6H/BC7 texture kept in TOP_LEFT orientation (no flip)" << std::endl;
+            // OSG_INFO << "ReadDDSFile info: BC6H/BC7 texture kept in TOP_LEFT orientation (no flip)" << std::endl;
         }
         else {
             osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
