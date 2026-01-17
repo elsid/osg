@@ -16,20 +16,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 
 if(COMMAND cmake_policy)
-    # Works around warnings libraries linked against that don't
-    # have absolute paths (e.g. -lpthreads)
-    cmake_policy(SET CMP0003 NEW)
-
-    # Works around warnings about escaped quotes in ADD_DEFINITIONS
-    # statements.
-    cmake_policy(SET CMP0005 NEW)
-
-    # tell CMake to prefer CMake's own CMake modules when available
-    # only available from cmake-2.8.4
-    if("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-        cmake_policy(SET CMP0017 NEW)
-    endif()
-
     # INTERPROCEDURAL_OPTIMIZATION is enforced when enabled.
     # Allows passing -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
     cmake_policy(SET CMP0069 NEW)
