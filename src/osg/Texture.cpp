@@ -60,6 +60,17 @@
     #define CHECK_CONSISTENCY
 #endif
 
+namespace {
+    template <class Iterator, class Map>
+    Iterator eraseIfEmpty(Iterator it, Map& map)
+    {
+        if (it->second->getNumOfTextureObjects() == 0)
+            return map.erase(it);
+        return ++it;
+    }
+}
+
+
 namespace osg {
 
 ApplicationUsageProxy Texture_e0(ApplicationUsage::ENVIRONMENTAL_VARIABLE,"OSG_MAX_TEXTURE_SIZE","Set the maximum size of textures.");
@@ -519,7 +530,7 @@ void TextureObjectSet::handlePendingOrphandedTextureObjects()
 
     unsigned int numOrphaned = _pendingOrphanedTextureObjects.size();
 
-    for(Texture::TextureObjectList::iterator itr = _pendingOrphanedTextureObjects.begin();
+    for(TextureObjectVector::iterator itr = _pendingOrphanedTextureObjects.begin();
         itr != _pendingOrphanedTextureObjects.end();
         ++itr)
     {
@@ -536,6 +547,7 @@ void TextureObjectSet::handlePendingOrphandedTextureObjects()
     _parent->getNumberActiveTextureObjects() -= numOrphaned;
 
     _pendingOrphanedTextureObjects.clear();
+    _pendingOrphanedTextureObjectsSize.exchange(0);
 
     CHECK_CONSISTENCY
 }
@@ -545,13 +557,11 @@ void TextureObjectSet::deleteAllTextureObjects()
 {
     // OSG_NOTICE<<"TextureObjectSet::deleteAllTextureObjects()"<<std::endl;
 
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedTextureObjects.empty())
-        {
-            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedTextureObjects();
-        }
+        // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedTextureObjects();
     }
 
     CHECK_CONSISTENCY
@@ -611,6 +621,7 @@ void TextureObjectSet::discardAllTextureObjects()
     _tail = 0;
 
     _pendingOrphanedTextureObjects.clear();
+    _pendingOrphanedTextureObjectsSize.exchange(0);
     _orphanedTextureObjects.clear();
 
     unsigned int numDeleted = _numOfTextureObjects;
@@ -625,13 +636,11 @@ void TextureObjectSet::discardAllTextureObjects()
 void TextureObjectSet::flushAllDeletedTextureObjects()
 {
     // OSG_NOTICE<<"TextureObjectSet::flushAllDeletedTextureObjects()"<<std::endl;
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedTextureObjects.empty())
-        {
-            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedTextureObjects();
-        }
+        // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedTextureObjects();
     }
 
     for(Texture::TextureObjectList::iterator itr = _orphanedTextureObjects.begin();
@@ -661,13 +670,11 @@ void TextureObjectSet::discardAllDeletedTextureObjects()
     // OSG_NOTICE<<"TextureObjectSet::discardAllDeletedTextureObjects()"<<std::endl;
 
     // clean up the pending orphans.
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedTextureObjects.empty())
-        {
-            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedTextureObjects();
-        }
+        // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedTextureObjects();
     }
 
     unsigned int numDiscarded = _orphanedTextureObjects.size();
@@ -689,13 +696,11 @@ void TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*/, double
 {
     // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..)"<<std::endl;
 
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedTextureObjects.empty())
-        {
-            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
-            handlePendingOrphandedTextureObjects();
-        }
+        // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+        handlePendingOrphandedTextureObjects();
     }
 
     if (_profile._size!=0 && _parent->getCurrTexturePoolSize()<=_parent->getMaxTexturePoolSize())
@@ -757,13 +762,11 @@ void TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*/, double
 
 bool TextureObjectSet::makeSpace(unsigned int& size)
 {
+    if (_pendingOrphanedTextureObjectsSize != 0)
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-        if (!_pendingOrphanedTextureObjects.empty())
-        {
-            // OSG_NOTICE<<"TextureObjectSet::TextureObjectSet::makeSpace(..) handling orphans"<<std::endl;
-            handlePendingOrphandedTextureObjects();
-        }
+        // OSG_NOTICE<<"TextureObjectSet::TextureObjectSet::makeSpace(..) handling orphans"<<std::endl;
+        handlePendingOrphandedTextureObjects();
     }
 
     if (!_orphanedTextureObjects.empty())
@@ -984,6 +987,7 @@ void TextureObjectSet::orphan(Texture::TextureObject* to)
     // list.  This double buffered approach to handling orphaned TO's is used
     // to avoid having to mutex the process of appling active TO's.
     _pendingOrphanedTextureObjects.push_back(to);
+    ++_pendingOrphanedTextureObjectsSize;
 
 #if 0
     OSG_NOTICE<<"TextureObjectSet::orphan("<<to<<")  _pendingOrphanedTextureObjects.size()="<<_pendingOrphanedTextureObjects.size()<<std::endl;
@@ -1153,10 +1157,10 @@ void TextureObjectManager::handlePendingOrphandedTextureObjects()
 void TextureObjectManager::deleteAllGLObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        itr != _textureSetMap.end();
-        ++itr)
+        itr != _textureSetMap.end();)
     {
         (*itr).second->deleteAllTextureObjects();
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
@@ -1168,35 +1172,36 @@ void TextureObjectManager::discardAllGLObjects()
     {
         (*itr).second->discardAllTextureObjects();
     }
+    _textureSetMap.clear();
 }
 
 void TextureObjectManager::flushAllDeletedGLObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        itr != _textureSetMap.end();
-        ++itr)
+        itr != _textureSetMap.end();)
     {
         (*itr).second->flushAllDeletedTextureObjects();
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
 void TextureObjectManager::discardAllDeletedGLObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        itr != _textureSetMap.end();
-        ++itr)
+        itr != _textureSetMap.end();)
     {
         (*itr).second->discardAllDeletedTextureObjects();
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
 void TextureObjectManager::flushDeletedGLObjects(double currentTime, double& availableTime)
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
-        (itr != _textureSetMap.end()) && (availableTime > 0.0);
-        ++itr)
+        (itr != _textureSetMap.end()) && (availableTime > 0.0);)
     {
         (*itr).second->flushDeletedTextureObjects(currentTime, availableTime);
+        itr = eraseIfEmpty(itr, _textureSetMap);
     }
 }
 
@@ -1287,6 +1292,11 @@ bool TextureObjectManager::checkConsistency() const
         return false;
     }
     return true;
+}
+
+void TextureObjectManager::reportStats(unsigned frameNumber, Stats& stats) const
+{
+    stats.setAttribute(frameNumber, "TextureObjectManager" + std::to_string(_contextID), static_cast<double>(_textureSetMap.size()));
 }
 
 osg::ref_ptr<Texture::TextureObject> Texture::generateTextureObject(const Texture* texture, unsigned int contextID, GLenum target)

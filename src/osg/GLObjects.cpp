@@ -146,3 +146,13 @@ GLuint GLObjectManager::createGLObject()
     OSG_INFO<<"void "<<_name<<"::createGLObject() : Not Implemented"<<std::endl;
     return 0;
 }
+
+void GLObjectManager::reportStats(unsigned frameNumber, Stats& stats) const
+{
+    const std::size_t size = [&](){
+        const OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+        return _deleteGLObjectHandles.size();
+    }();
+
+    stats.setAttribute(frameNumber, _name + std::to_string(_contextID), static_cast<double>(size));
+}
