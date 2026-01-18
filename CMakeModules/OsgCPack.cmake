@@ -60,7 +60,7 @@ SET(CPACK_SOURCE_GENERATOR "TGZ")
 # for ms visual studio we use it's internally defined variable to get the configuration (debug,release, ...)
 IF(MSVC_IDE)
     SET(OSG_CPACK_CONFIGURATION "$(OutDir)")
-    SET(PACKAGE_TARGET_PREFIX "Package ")
+    SET(PACKAGE_TARGET_PREFIX "Package_")
 ELSE()
     # on un*x an empty CMAKE_BUILD_TYPE means release
     IF(CMAKE_BUILD_TYPE)
