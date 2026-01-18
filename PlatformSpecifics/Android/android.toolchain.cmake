@@ -210,7 +210,7 @@
 
 # Modified by Lasse Oorni and Yao Wei Tjong for Urho3D
 
-cmake_minimum_required( VERSION 3.0 )
+cmake_minimum_required( VERSION 3.2 )
 
 # Urho3D: on Windows Cygwin-based NDK tools may fail in the linking phase with too long command line. Turn on response files to avoid this
 if( CMAKE_HOST_WIN32 )
@@ -234,11 +234,7 @@ if( _CMAKE_IN_TRY_COMPILE )
 endif()
 
 # this one is important
-if( CMAKE_VERSION VERSION_GREATER "3.0.99" )
- set( CMAKE_SYSTEM_NAME Android )
-else()
- set( CMAKE_SYSTEM_NAME Linux )
-endif()
+set( CMAKE_SYSTEM_NAME Android )
 
 # this one not so much
 set( CMAKE_SYSTEM_VERSION 1 )
