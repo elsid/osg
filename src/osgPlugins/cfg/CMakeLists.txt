@@ -19,7 +19,7 @@ SET(TARGET_H
 
 
 # lex/yacc generated files use register that causes warnings with CLang under OSX so disable this warnings.
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
 ENDIF()
 

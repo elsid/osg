@@ -9,7 +9,7 @@
 # correspond to the ./configure --prefix=$FBX_DIR
 
 IF(APPLE)
-  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     # using regular Clang or AppleClang
     SET(FBX_LIBDIR "clang")
   else()

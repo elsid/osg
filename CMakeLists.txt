@@ -1022,7 +1022,7 @@ ELSEIF(MSVC)
         #C4706 assignment within conditional expression
         #C4589: Constructor of abstract class 'osgGA::CameraManipulator' ignores initializer for virtual base class 'osg::Object'
         SET(OSG_AGGRESSIVE_WARNING_FLAGS /W4 /wd4589 /wd4706 /wd4127 /wd4100)
-ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         SET(OSG_AGGRESSIVE_WARNING_FLAGS  -Wall -Wparentheses -Wno-long-long -Wno-import -pedantic -Wreturn-type -Wmissing-braces -Wunknown-pragmas -Wunused -Wno-overloaded-virtual)
 
         # CMake lacks an elseif, so other non-gcc, non-VS compilers need
