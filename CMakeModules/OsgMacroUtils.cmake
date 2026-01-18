@@ -24,22 +24,7 @@ MACRO(LINK_WITH_VARIABLES TRGTNAME)
 ENDMACRO(LINK_WITH_VARIABLES TRGTNAME)
 
 MACRO(LINK_INTERNAL TRGTNAME)
-    IF(NOT CMAKE24)
-        TARGET_LINK_LIBRARIES(${TRGTNAME} ${ARGN})
-    ELSE(NOT CMAKE24)
-        FOREACH(LINKLIB ${ARGN})
-            IF(MSVC AND OSG_MSVC_VERSIONED_DLL)
-                #when using versioned names, the .dll name differ from .lib name, there is a problem with that:
-                #CMake 2.4.7, at least seem to use PREFIX instead of IMPORT_PREFIX  for computing linkage info to use into projects,
-                # so we full path name to specify linkage, this prevent automatic inferencing of dependencies, so we add explicit depemdencies
-                #to library targets used
-                TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${OUTPUT_LIBDIR}/${LINKLIB}${CMAKE_RELEASE_POSTFIX}.lib" debug "${OUTPUT_LIBDIR}/${LINKLIB}${CMAKE_DEBUG_POSTFIX}.lib")
-                ADD_DEPENDENCIES(${TRGTNAME} ${LINKLIB})
-            ELSE(MSVC AND OSG_MSVC_VERSIONED_DLL)
-                TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${LINKLIB}${CMAKE_RELEASE_POSTFIX}" debug "${LINKLIB}${CMAKE_DEBUG_POSTFIX}")
-            ENDIF(MSVC AND OSG_MSVC_VERSIONED_DLL)
-        ENDFOREACH(LINKLIB)
-    ENDIF(NOT CMAKE24)
+    TARGET_LINK_LIBRARIES(${TRGTNAME} ${ARGN})
 ENDMACRO(LINK_INTERNAL TRGTNAME)
 
 MACRO(LINK_EXTERNAL TRGTNAME)
@@ -266,34 +251,7 @@ MACRO(SETUP_PLUGIN PLUGIN_NAME)
     ENDIF(DYNAMIC_OPENSCENEGRAPH)
 
     IF(MSVC)
-        IF(NOT CMAKE24)
-            SET_OUTPUT_DIR_PROPERTY_260(${TARGET_TARGETNAME} "${OSG_PLUGINS}")        # Sets the ouput to be /osgPlugin-X.X.X ; also ensures the /Debug /Release are removed
-        ELSE(NOT CMAKE24)
-
-            IF(OSG_MSVC_VERSIONED_DLL)
-
-                #this is a hack... the build place is set to lib/<debug or release> by LIBARARY_OUTPUT_PATH equal to OUTPUT_LIBDIR
-                #the .lib will be crated in ../ so going straight in lib by the IMPORT_PREFIX property
-                #because we want dll placed in OUTPUT_BINDIR ie the bin folder sibling of lib, we can use ../../bin to go there,
-                #it is hardcoded, we should compute OUTPUT_BINDIR position relative to OUTPUT_LIBDIR ... to be implemented
-                #changing bin to something else breaks this hack
-                #the dll are placed in bin/${OSG_PLUGINS}
-
-                IF(NOT MSVC_IDE)
-                    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "../bin/${OSG_PLUGINS}/")
-                ELSE(NOT MSVC_IDE)
-                    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "../../bin/${OSG_PLUGINS}/" IMPORT_PREFIX "../")
-                ENDIF(NOT MSVC_IDE)
-
-            ELSE(OSG_MSVC_VERSIONED_DLL)
-
-                #in standard mode (unversioned) the .lib and .dll are placed in lib/<debug or release>/${OSG_PLUGINS}.
-                #here the PREFIX property has been used, the same result would be accomplidhe by prepending ${OSG_PLUGINS}/ to OUTPUT_NAME target property
-
-                SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "${OSG_PLUGINS}/")
-            ENDIF(OSG_MSVC_VERSIONED_DLL)
-
-        ENDIF(NOT CMAKE24)
+        SET_OUTPUT_DIR_PROPERTY_260(${TARGET_TARGETNAME} "${OSG_PLUGINS}")        # Sets the ouput to be /osgPlugin-X.X.X ; also ensures the /Debug /Release are removed
     ENDIF(MSVC)
 
     SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PROJECT_LABEL "${TARGET_LABEL}")
@@ -491,26 +449,9 @@ MACRO(HANDLE_MSVC_DLL)
 
         SET_OUTPUT_DIR_PROPERTY_260(${LIB_NAME} "")        # Ensure the /Debug /Release are removed
         IF(NOT MSVC_IDE)
-            IF (NOT CMAKE24)
-                SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
-            ELSE (NOT CMAKE24)
-                SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../bin/${LIB_PREFIX}${LIB_SOVERSION}-" IMPORT_PREFIX "../")
-                SET(NEW_LIB_NAME "${OUTPUT_BINDIR}/${LIB_PREFIX}${LIB_SOVERSION}-${LIB_NAME}")
-                ADD_CUSTOM_COMMAND(
-                    TARGET ${LIB_NAME}
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy "${NEW_LIB_NAME}.lib"  "${OUTPUT_LIBDIR}/${LIB_NAME}.lib"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${NEW_LIB_NAME}.exp"  "${OUTPUT_LIBDIR}/${LIB_NAME}.exp"
-                    COMMAND ${CMAKE_COMMAND} -E remove "${NEW_LIB_NAME}.lib"
-                    COMMAND ${CMAKE_COMMAND} -E remove "${NEW_LIB_NAME}.exp"
-                    )
-            ENDIF (NOT CMAKE24)
+            SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
         ELSE(NOT MSVC_IDE)
-            IF (NOT CMAKE24)
-                SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
-            ELSE (NOT CMAKE24)
-                SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../../bin/${LIB_PREFIX}${LIB_SOVERSION}-" IMPORT_PREFIX "../")
-            ENDIF (NOT CMAKE24)
+            SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
         ENDIF(NOT MSVC_IDE)
 
 #     SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../../bin/osg${OPENSCENEGRAPH_SOVERSION}-")
