@@ -335,6 +335,20 @@ bool Image::isPackedType(GLenum type)
     }
 }
 
+bool Image::isBPTC(GLenum pixelFormat)
+{
+    switch(pixelFormat)
+    {
+        case(GL_COMPRESSED_RGBA_BPTC_UNORM):
+        case(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM):
+        case(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT):
+        case(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT):
+            return true;
+        default:
+            return false;
+    }
+}
+
 
 GLenum Image::computePixelFormat(GLenum format)
 {
@@ -1855,12 +1869,20 @@ void Image::flipVertical()
         return;
     }
 
+    // BPTC (BC6H/BC7) textures cannot be flipped in compressed form due to complex per-block encoding.
+    // Callers should check isBPTC() and set TOP_LEFT origin instead of calling flipVertical().
+    if (Image::isBPTC(_pixelFormat))
+    {
+        OSG_WARN << "Image::flipVertical(): BPTC (BC6H/BC7) textures cannot be flipped in compressed form. "
+                 << "Use TOP_LEFT origin with runtime UV flip instead." << std::endl;
+        return;
+    }
+
     unsigned int rowSize = getRowSizeInBytes();
     unsigned int rowStep = getRowStepInBytes();
 
     const bool dxtc(dxtc_tool::isDXTC(_pixelFormat));
     const bool rgtc(dxtc_tool::isRGTC(_pixelFormat));
-    const bool bptc(dxtc_tool::isBPTC(_pixelFormat)); // safety: If someone calls flipVertical on a BPTC compressed image, this defensively prevents it.
 
     if (_mipmapData.empty())
     {
@@ -1868,7 +1890,7 @@ void Image::flipVertical()
         // so we can safely handle 3d textures
         for(int r=0;r<_r;++r)
         {
-            if (dxtc || rgtc || bptc)
+            if (dxtc || rgtc)
             {
                 if (!dxtc_tool::VerticalFlip(_s,_t,_pixelFormat,data(0,0,r)))
                 {
@@ -1888,7 +1910,7 @@ void Image::flipVertical()
     }
     else if (_r==1)
     {
-        if (dxtc || rgtc || bptc)
+        if (dxtc || rgtc)
         {
             if (!dxtc_tool::VerticalFlip(_s,_t,_pixelFormat,_data))
             {
@@ -1915,7 +1937,7 @@ void Image::flipVertical()
             t >>= 1;
             if (s==0) s=1;
             if (t==0) t=1;
-            if (dxtc || rgtc || bptc)
+            if (dxtc || rgtc)
             {
                 if (!dxtc_tool::VerticalFlip(s,t,_pixelFormat,_data+_mipmapData[i]))
                 {

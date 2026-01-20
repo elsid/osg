@@ -818,28 +818,24 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
                     internalFormat = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
                     pixelFormat    = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
-                    isDXTC = true;
                     break;
 
                 case OSG_DXGI_FORMAT_BC6H_SF16:
                     internalFormat = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
                     pixelFormat    = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
-                    isDXTC = true;
                     break;
 
                 case OSG_DXGI_FORMAT_BC7_UNORM:
                     internalFormat = GL_COMPRESSED_RGBA_BPTC_UNORM;
                     pixelFormat    = GL_COMPRESSED_RGBA_BPTC_UNORM;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
-                    isDXTC = true;
                     break;
 
                 case OSG_DXGI_FORMAT_BC7_UNORM_SRGB:
                     internalFormat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
                     pixelFormat    = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
                     packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
-                    isDXTC = true;
                     break;
 
                 default:
@@ -1129,15 +1125,9 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
     if (mipmap_offsets.size()>0) osgImage->setMipmapLevels(mipmap_offsets);
 
     if (flipDDSRead) {
-        // BC6H/BC7 (BPTC) cannot be flipped in compressed form - mark as TOP_LEFT for runtime UV flip
-        bool isBPTC = (internalFormat == GL_COMPRESSED_RGBA_BPTC_UNORM ||
-                       internalFormat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM ||
-                       internalFormat == GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT ||
-                       internalFormat == GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT);
-
-        if (isBPTC) {
+        // BPTC (BC6H/BC7) cannot be flipped in compressed form - set TOP_LEFT for runtime UV flip
+        if (osg::Image::isBPTC(internalFormat)) {
             osgImage->setOrigin(osg::Image::TOP_LEFT);
-            // OSG_INFO << "ReadDDSFile info: BC6H/BC7 texture kept in TOP_LEFT orientation (no flip)" << std::endl;
         }
         else {
             osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
