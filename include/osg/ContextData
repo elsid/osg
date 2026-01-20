@@ -14,9 +14,14 @@
 #ifndef OSG_CONTEXTDATA
 #define OSG_CONTEXTDATA 1
 
+#include <osg/GLObjects>
 #include <osg/GraphicsContext>
 
 namespace osg {
+
+class ContextData;
+
+typedef std::map<unsigned int, osg::ref_ptr<ContextData> > ContextDataMap;
 
 class OSG_EXPORT ContextData : public GraphicsObjectManager
 {
@@ -72,6 +77,8 @@ class OSG_EXPORT ContextData : public GraphicsObjectManager
         virtual void resetStats();
         virtual void reportStats(std::ostream& out);
         virtual void recomputeStats(std::ostream& out) const;
+
+        void reportStats(unsigned frameNumber, Stats& stats) const override;
 
         /** Flush all deleted OpenGL objects within the specified availableTime.
         * Note, must be called from a thread which has current the graphics context associated with contextID. */
@@ -129,6 +136,8 @@ class OSG_EXPORT ContextData : public GraphicsObjectManager
 
         /** Unregister a GraphicsContext.*/
         static void unregisterGraphicsContext(GraphicsContext* gc);
+
+        static ContextDataMap getContextDataMap();
 
     protected:
         virtual ~ContextData();
