@@ -188,6 +188,16 @@ public:
     #endif
     }
 
+    void reportStats(unsigned frameNumber, Stats& stats) const override
+    {
+        const std::size_t size = [&](){
+            const OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex_deletedDisplayListCache);
+            return _displayListMap.size();
+        }();
+
+        stats.setAttribute(frameNumber, "DisplayListManager" + std::to_string(_contextID), static_cast<double>(size));
+    }
+
 protected:
 
     int _numberDrawablesReusedLastInLastFrame;
@@ -195,7 +205,7 @@ protected:
     int _numberDeletedDrawablesInLastFrame;
 
     typedef std::multimap<unsigned int,GLuint> DisplayListMap;
-    OpenThreads::Mutex _mutex_deletedDisplayListCache;
+    mutable OpenThreads::Mutex _mutex_deletedDisplayListCache;
     DisplayListMap _displayListMap;
 
 };

@@ -19,7 +19,7 @@
 using namespace osg;
 
 
-typedef std::map<unsigned int, osg::ref_ptr<ContextData> >  ContextIDMap;
+typedef ContextDataMap ContextIDMap;
 static ContextIDMap s_contextIDMap;
 static OpenThreads::ReentrantMutex s_contextIDMapMutex;
 static ContextData::GraphicsContexts s_registeredContexts;
@@ -79,6 +79,12 @@ void ContextData::recomputeStats(std::ostream& out) const
     }
 }
 
+void ContextData::reportStats(unsigned frameNumber, Stats& stats) const
+{
+    for (ManagerMap::const_iterator it = _managerMap.begin(); it != _managerMap.end(); ++it)
+        if (osg::GraphicsObjectManager* const v = dynamic_cast<osg::GraphicsObjectManager*>(it->second.get()))
+            v->reportStats(frameNumber, stats);
+}
 
 void ContextData::flushDeletedGLObjects(double currentTime, double& availableTime)
 {
@@ -333,4 +339,10 @@ GraphicsContext* ContextData::getCompileContext(unsigned int contextID)
     ContextIDMap::iterator itr = s_contextIDMap.find(contextID);
     if (itr != s_contextIDMap.end()) return itr->second->getCompileContext();
     else return 0;
+}
+
+ContextDataMap ContextData::getContextDataMap()
+{
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_contextIDMapMutex);
+    return s_contextIDMap;
 }

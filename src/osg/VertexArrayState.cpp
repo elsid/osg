@@ -14,6 +14,7 @@
 #include <osg/VertexArrayState>
 #include <osg/State>
 #include <osg/ContextData>
+#include <osg/Stats>
 
 using namespace osg;
 
@@ -102,10 +103,20 @@ public:
         _vertexArrayStateList.push_back(vas);
     }
 
+    void reportStats(unsigned frameNumber, Stats& stats) const override
+    {
+        const std::size_t size = [&](){
+            const OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex_vertexArrayStateList);
+            return _vertexArrayStateList.size();
+        }();
+
+        stats.setAttribute(frameNumber, "VertexArrayStateManager" + std::to_string(_contextID), static_cast<double>(size));
+    }
+
 protected:
 
     typedef std::list< osg::ref_ptr<VertexArrayState> > VertexArrayStateList;
-    OpenThreads::Mutex _mutex_vertexArrayStateList;
+    mutable OpenThreads::Mutex _mutex_vertexArrayStateList;
     VertexArrayStateList _vertexArrayStateList;
 };
 

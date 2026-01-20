@@ -1173,6 +1173,7 @@ public:
     unsigned int getNumPendingOrphans() const { return static_cast<unsigned int>(_pendingOrphanedTextureObjects.size()); }
 
 protected:
+    typedef std::vector<ref_ptr<Texture::TextureObject>> TextureObjectVector;
 
     virtual ~TextureObjectSet();
 
@@ -1183,7 +1184,8 @@ protected:
     Texture::TextureProfile     _profile;
     unsigned int                _numOfTextureObjects;
     Texture::TextureObjectList  _orphanedTextureObjects;
-    Texture::TextureObjectList  _pendingOrphanedTextureObjects;
+    OpenThreads::Atomic         _pendingOrphanedTextureObjectsSize;
+    TextureObjectVector         _pendingOrphanedTextureObjects;
 
     Texture::TextureObject*     _head;
     Texture::TextureObject*     _tail;
@@ -1238,6 +1240,8 @@ public:
     void reportStats(std::ostream& out);
     void recomputeStats(std::ostream& out) const;
     bool checkConsistency() const;
+
+    void reportStats(unsigned frameNumber, Stats& stats) const override;
 
     unsigned int& getFrameNumber() { return _frameNumber; }
     unsigned int& getNumberFrames() { return _numFrames; }
