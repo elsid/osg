@@ -1124,22 +1124,20 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
 
     if (mipmap_offsets.size()>0) osgImage->setMipmapLevels(mipmap_offsets);
 
-    if (flipDDSRead) {
-        // BPTC (BC6H/BC7) cannot be flipped in compressed form - set TOP_LEFT for runtime UV flip
-        if (osg::Image::isBPTC(internalFormat)) {
-            osgImage->setOrigin(osg::Image::TOP_LEFT);
+    osgImage->setOrigin(osg::Image::TOP_LEFT);
+
+    // BPTC (BC6H/BC7) textures cannot be flipped in compressed form
+    if (flipDDSRead && !osg::Image::isBPTC(internalFormat))
+    {
+        osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
+        if (!isDXTC || ((s>4 && s%4==0 && t>4 && t%4==0) || s<=4)) // Flip may crash (access violation) or fail for non %4 dimensions (except for s<4). Tested with revision trunk 2013-02-22.
+        {
+            OSG_INFO<<"Flipping dds on load"<<std::endl;
+            osgImage->flipVertical();
         }
-        else {
-            osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
-            if (!isDXTC || ((s>4 && s%4==0 && t>4 && t%4==0) || s<=4)) // Flip may crash (access violation) or fail for non %4 dimensions (except for s<4). Tested with revision trunk 2013-02-22.
-            {
-                OSG_INFO<<"Flipping dds on load"<<std::endl;
-                osgImage->flipVertical();
-            }
-            else
-            {
-                OSG_WARN << "ReadDDSFile warning: Vertical flip was skipped. Image dimensions have to be multiple of 4." << std::endl;
-            }
+        else
+        {
+            OSG_WARN << "ReadDDSFile warning: Vertical flip was skipped. Image dimensions have to be multiple of 4." << std::endl;
         }
     }
 
