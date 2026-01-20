@@ -13,23 +13,9 @@ SET(OPENSCENEGRAPH_RELEASE_CANDIDATE 0)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5 FATAL_ERROR)
 
 if(COMMAND cmake_policy)
-    # Works around warnings libraries linked against that don't
-    # have absolute paths (e.g. -lpthreads)
-    cmake_policy(SET CMP0003 NEW)
-
-    # Works around warnings about escaped quotes in ADD_DEFINITIONS
-    # statements.
-    cmake_policy(SET CMP0005 NEW)
-
-    # tell CMake to prefer CMake's own CMake modules when available
-    # only available from cmake-2.8.4
-    if("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-        cmake_policy(SET CMP0017 NEW)
-    endif()
-
     # INTERPROCEDURAL_OPTIMIZATION is enforced when enabled.
     # Allows passing -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
     cmake_policy(SET CMP0069 NEW)
@@ -902,22 +888,8 @@ IF(DEFINED LIB_POSTFIX)
   # Use LIB_POSTFIX if defined
   SET(OSG_INSTALL_LIBDIR lib${LIB_POSTFIX})
 ELSE()
-  IF(CMAKE_VERSION VERSION_LESS "2.8.5")
-    IF(UNIX AND NOT WIN32 AND NOT APPLE)
-      IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-        SET(LIB_POSTFIX "64" CACHE STRING "suffix for 32/64 dir placement")
-        MARK_AS_ADVANCED(LIB_POSTFIX)
-      ENDIF()
-    ENDIF()
-    IF(NOT DEFINED LIB_POSTFIX)
-      SET(LIB_POSTFIX "")
-    ENDIF()
-    SET(OSG_INSTALL_LIBDIR lib${LIB_POSTFIX})
-  ELSE()
-    # Use the GNU standard installation directories for CMake >= 2.8.5
-    INCLUDE(GNUInstallDirs)
-    SET(OSG_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
-  ENDIF()
+  INCLUDE(GNUInstallDirs)
+  SET(OSG_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
 ENDIF()
 IF(NOT DEFINED LIB_POSTFIX)
     SET(LIB_POSTFIX "")
@@ -952,20 +924,17 @@ ELSE(WIN32)
     SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_LIBDIR})
 ENDIF(WIN32)
 
-# Testing CMAKE_VERSION is possible in >= 2.6.4 only
-BUILDER_VERSION_GREATER(2 8 0)
-IF(VALID_BUILDER_VERSION)  # If CMake >= 2.8.1
-    FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})        # For each configuration (Debug, Release, MinSizeRel... and/or anything the user chooses)
-        STRING(TOUPPER "${CONF}" CONF)                # Go uppercase (DEBUG, RELEASE...)
-        SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_LIBDIR}")
-        SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_BINDIR}")
-        IF(WIN32)
-            SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_BINDIR}")
-        ELSE()
-            SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_LIBDIR}")
-        ENDIF()
-    ENDFOREACH()
-ENDIF(VALID_BUILDER_VERSION)
+
+FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})        # For each configuration (Debug, Release, MinSizeRel... and/or anything the user chooses)
+    STRING(TOUPPER "${CONF}" CONF)                # Go uppercase (DEBUG, RELEASE...)
+    SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_LIBDIR}")
+    SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_BINDIR}")
+    IF(WIN32)
+        SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_BINDIR}")
+    ELSE()
+        SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_LIBDIR}")
+    ENDIF()
+ENDFOREACH()
 
 #SET(INSTALL_BINDIR OpenSceneGraph/bin)
 #SET(INSTALL_INCDIR OpenSceneGraph/include)
@@ -1036,7 +1005,7 @@ ELSEIF(MSVC)
         #C4706 assignment within conditional expression
         #C4589: Constructor of abstract class 'osgGA::CameraManipulator' ignores initializer for virtual base class 'osg::Object'
         SET(OSG_AGGRESSIVE_WARNING_FLAGS /W4 /wd4589 /wd4706 /wd4127 /wd4100)
-ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         SET(OSG_AGGRESSIVE_WARNING_FLAGS  -Wall -Wparentheses -Wno-long-long -Wno-import -pedantic -Wreturn-type -Wmissing-braces -Wunknown-pragmas -Wunused -Wno-overloaded-virtual)
 
         # CMake lacks an elseif, so other non-gcc, non-VS compilers need

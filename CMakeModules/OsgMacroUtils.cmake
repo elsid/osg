@@ -9,32 +9,6 @@
 #  the content of this library for linking when in debugging
 #######################################################################################################
 
-# VALID_BUILDER_VERSION: used for replacing CMAKE_VERSION (available in v2.6.3 RC9) and VERSION_GREATER/VERSION_LESS (available in 2.6.2 RC4).
-# This can be replaced by "IF(${CMAKE_VERSION} VERSION_LESS "x.y.z")" from 2.6.4.
-SET(VALID_BUILDER_VERSION OFF)
-MACRO(BUILDER_VERSION_GREATER MAJOR_VER MINOR_VER PATCH_VER)
-    SET(VALID_BUILDER_VERSION OFF)
-    IF(CMAKE_MAJOR_VERSION GREATER ${MAJOR_VER})
-        SET(VALID_BUILDER_VERSION ON)
-    ELSEIF(CMAKE_MAJOR_VERSION EQUAL ${MAJOR_VER})
-        IF(CMAKE_MINOR_VERSION GREATER ${MINOR_VER})
-            SET(VALID_BUILDER_VERSION ON)
-        ELSEIF(CMAKE_MINOR_VERSION EQUAL ${MINOR_VER})
-            IF(CMAKE_PATCH_VERSION GREATER ${PATCH_VER})
-                SET(VALID_BUILDER_VERSION ON)
-            ENDIF(CMAKE_PATCH_VERSION GREATER ${PATCH_VER})
-        ENDIF()
-    ENDIF()
-ENDMACRO(BUILDER_VERSION_GREATER MAJOR_VER MINOR_VER PATCH_VER)
-
-
-# CMAKE_VERSION_TEST: Define whether "IF(${CMAKE_VERSION} VERSION_LESS "x.y.z")" can be used or not.
-BUILDER_VERSION_GREATER(2 8 0)
-SET(CMAKE_VERSION_TEST ${VALID_BUILDER_VERSION})        # >= 2.8.0
-
-SET(VALID_BUILDER_VERSION OFF)
-
-
 MACRO(LINK_WITH_VARIABLES TRGTNAME)
     FOREACH(varname ${ARGN})
         IF(${varname}_DEBUG)
@@ -50,22 +24,7 @@ MACRO(LINK_WITH_VARIABLES TRGTNAME)
 ENDMACRO(LINK_WITH_VARIABLES TRGTNAME)
 
 MACRO(LINK_INTERNAL TRGTNAME)
-    IF(NOT CMAKE24)
-        TARGET_LINK_LIBRARIES(${TRGTNAME} ${ARGN})
-    ELSE(NOT CMAKE24)
-        FOREACH(LINKLIB ${ARGN})
-            IF(MSVC AND OSG_MSVC_VERSIONED_DLL)
-                #when using versioned names, the .dll name differ from .lib name, there is a problem with that:
-                #CMake 2.4.7, at least seem to use PREFIX instead of IMPORT_PREFIX  for computing linkage info to use into projects,
-                # so we full path name to specify linkage, this prevent automatic inferencing of dependencies, so we add explicit depemdencies
-                #to library targets used
-                TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${OUTPUT_LIBDIR}/${LINKLIB}${CMAKE_RELEASE_POSTFIX}.lib" debug "${OUTPUT_LIBDIR}/${LINKLIB}${CMAKE_DEBUG_POSTFIX}.lib")
-                ADD_DEPENDENCIES(${TRGTNAME} ${LINKLIB})
-            ELSE(MSVC AND OSG_MSVC_VERSIONED_DLL)
-                TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${LINKLIB}${CMAKE_RELEASE_POSTFIX}" debug "${LINKLIB}${CMAKE_DEBUG_POSTFIX}")
-            ENDIF(MSVC AND OSG_MSVC_VERSIONED_DLL)
-        ENDFOREACH(LINKLIB)
-    ENDIF(NOT CMAKE24)
+    TARGET_LINK_LIBRARIES(${TRGTNAME} ${ARGN})
 ENDMACRO(LINK_INTERNAL TRGTNAME)
 
 MACRO(LINK_EXTERNAL TRGTNAME)
@@ -161,39 +120,29 @@ ENDMACRO(SETUP_LINK_LIBRARIES)
 
 # Sets the output directory property for CMake >= 2.6.0, giving an output path RELATIVE to default one
 MACRO(SET_OUTPUT_DIR_PROPERTY_260 TARGET_TARGETNAME RELATIVE_OUTDIR)
-    BUILDER_VERSION_GREATER(2 8 0)
-    IF(NOT VALID_BUILDER_VERSION)
-        # If CMake <= 2.8.0 (Testing CMAKE_VERSION is possible in >= 2.6.4)
-        IF(MSVC_IDE)
-            # Using the "prefix" hack
-            SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "../${RELATIVE_OUTDIR}/")
-        ELSE(MSVC_IDE)
-            SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "${RELATIVE_OUTDIR}/")
-        ENDIF(MSVC_IDE)
-    ELSE(NOT VALID_BUILDER_VERSION)
-        # Using the output directory properties
+    
+    # Using the output directory properties
 
-        # Global properties (All generators but VS & Xcode)
-        FILE(TO_CMAKE_PATH TMPVAR "CMAKE_ARCHIVE_OUTPUT_DIRECTORY/${RELATIVE_OUTDIR}")
-        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${TMPVAR}")
-        FILE(TO_CMAKE_PATH TMPVAR "CMAKE_RUNTIME_OUTPUT_DIRECTORY/${RELATIVE_OUTDIR}")
-        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TMPVAR}")
-        FILE(TO_CMAKE_PATH TMPVAR "CMAKE_LIBRARY_OUTPUT_DIRECTORY/${RELATIVE_OUTDIR}")
-        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${TMPVAR}")
+    # Global properties (All generators but VS & Xcode)
+    FILE(TO_CMAKE_PATH TMPVAR "CMAKE_ARCHIVE_OUTPUT_DIRECTORY/${RELATIVE_OUTDIR}")
+    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${TMPVAR}")
+    FILE(TO_CMAKE_PATH TMPVAR "CMAKE_RUNTIME_OUTPUT_DIRECTORY/${RELATIVE_OUTDIR}")
+    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TMPVAR}")
+    FILE(TO_CMAKE_PATH TMPVAR "CMAKE_LIBRARY_OUTPUT_DIRECTORY/${RELATIVE_OUTDIR}")
+    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${TMPVAR}")
 
-        # Per-configuration property (VS, Xcode)
-        FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})        # For each configuration (Debug, Release, MinSizeRel... and/or anything the user chooses)
-            STRING(TOUPPER "${CONF}" CONF)                # Go uppercase (DEBUG, RELEASE...)
+    # Per-configuration property (VS, Xcode)
+    FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})        # For each configuration (Debug, Release, MinSizeRel... and/or anything the user chooses)
+        STRING(TOUPPER "${CONF}" CONF)                # Go uppercase (DEBUG, RELEASE...)
 
-            # We use "FILE(TO_CMAKE_PATH", to create nice looking paths
-            FILE(TO_CMAKE_PATH "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONF}}/${RELATIVE_OUTDIR}" TMPVAR)
-            SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY_${CONF}" "${TMPVAR}")
-            FILE(TO_CMAKE_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONF}}/${RELATIVE_OUTDIR}" TMPVAR)
-            SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${CONF}" "${TMPVAR}")
-            FILE(TO_CMAKE_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}}/${RELATIVE_OUTDIR}" TMPVAR)
-            SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES "LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${TMPVAR}")
-        ENDFOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})
-    ENDIF(NOT VALID_BUILDER_VERSION)
+        # We use "FILE(TO_CMAKE_PATH", to create nice looking paths
+        FILE(TO_CMAKE_PATH "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONF}}/${RELATIVE_OUTDIR}" TMPVAR)
+        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY_${CONF}" "${TMPVAR}")
+        FILE(TO_CMAKE_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONF}}/${RELATIVE_OUTDIR}" TMPVAR)
+        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${CONF}" "${TMPVAR}")
+        FILE(TO_CMAKE_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}}/${RELATIVE_OUTDIR}" TMPVAR)
+        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES "LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${TMPVAR}")
+    ENDFOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})
 ENDMACRO(SET_OUTPUT_DIR_PROPERTY_260 TARGET_TARGETNAME RELATIVE_OUTDIR)
 
 
@@ -302,34 +251,7 @@ MACRO(SETUP_PLUGIN PLUGIN_NAME)
     ENDIF(DYNAMIC_OPENSCENEGRAPH)
 
     IF(MSVC)
-        IF(NOT CMAKE24)
-            SET_OUTPUT_DIR_PROPERTY_260(${TARGET_TARGETNAME} "${OSG_PLUGINS}")        # Sets the ouput to be /osgPlugin-X.X.X ; also ensures the /Debug /Release are removed
-        ELSE(NOT CMAKE24)
-
-            IF(OSG_MSVC_VERSIONED_DLL)
-
-                #this is a hack... the build place is set to lib/<debug or release> by LIBARARY_OUTPUT_PATH equal to OUTPUT_LIBDIR
-                #the .lib will be crated in ../ so going straight in lib by the IMPORT_PREFIX property
-                #because we want dll placed in OUTPUT_BINDIR ie the bin folder sibling of lib, we can use ../../bin to go there,
-                #it is hardcoded, we should compute OUTPUT_BINDIR position relative to OUTPUT_LIBDIR ... to be implemented
-                #changing bin to something else breaks this hack
-                #the dll are placed in bin/${OSG_PLUGINS}
-
-                IF(NOT MSVC_IDE)
-                    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "../bin/${OSG_PLUGINS}/")
-                ELSE(NOT MSVC_IDE)
-                    SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "../../bin/${OSG_PLUGINS}/" IMPORT_PREFIX "../")
-                ENDIF(NOT MSVC_IDE)
-
-            ELSE(OSG_MSVC_VERSIONED_DLL)
-
-                #in standard mode (unversioned) the .lib and .dll are placed in lib/<debug or release>/${OSG_PLUGINS}.
-                #here the PREFIX property has been used, the same result would be accomplidhe by prepending ${OSG_PLUGINS}/ to OUTPUT_NAME target property
-
-                SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PREFIX "${OSG_PLUGINS}/")
-            ENDIF(OSG_MSVC_VERSIONED_DLL)
-
-        ENDIF(NOT CMAKE24)
+        SET_OUTPUT_DIR_PROPERTY_260(${TARGET_TARGETNAME} "${OSG_PLUGINS}")        # Sets the ouput to be /osgPlugin-X.X.X ; also ensures the /Debug /Release are removed
     ENDIF(MSVC)
 
     SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES PROJECT_LABEL "${TARGET_LABEL}")
@@ -433,6 +355,14 @@ MACRO(SETUP_EXE IS_COMMANDLINE_APP)
         ENDIF()
     ENDIF()
 
+    IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND DYNAMIC_OPENSCENEGRAPH)
+        # templated types used in OSG plugins and applications need to get the same type ID
+        # based on investigation for https://gitlab.com/OpenMW/openmw/-/issues/8039 by the OpenMW team, this is believed to only be necessary for Clang on Linux
+        # i.e. not for GCC anywhere, MSVC on Windows or for AppleClang on MacOS
+        # it's possible that this is really required by the C++ spec for all platforms and we're just getting away with it everywhere else
+        SET_TARGET_PROPERTIES(${TARGET_TARGETNAME} PROPERTIES ENABLE_EXPORTS ON)
+    ENDIF()
+
     SETUP_LINK_LIBRARIES()
 
 ENDMACRO(SETUP_EXE)
@@ -457,7 +387,7 @@ MACRO(SETUP_APPLICATION APPLICATION_NAME)
         ELSE(APPLE)
             INSTALL(TARGETS ${TARGET_TARGETNAME} RUNTIME DESTINATION bin COMPONENT openscenegraph  )
             IF(MSVC)
-                INSTALL(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION bin COMPONENT openscenegraph)
+                INSTALL(FILES $<TARGET_PDB_FILE:${TARGET_TARGETNAME}> DESTINATION bin COMPONENT openscenegraph)
             ENDIF(MSVC)
         ENDIF(APPLE)
 
@@ -489,7 +419,7 @@ MACRO(SETUP_EXAMPLE EXAMPLE_NAME)
         ELSE(APPLE)
             INSTALL(TARGETS ${TARGET_TARGETNAME} RUNTIME DESTINATION share/OpenSceneGraph/bin COMPONENT openscenegraph-examples )
             IF(MSVC)
-                INSTALL(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION share/OpenSceneGraph/bin COMPONENT openscenegraph-examples)
+                INSTALL(FILES $<TARGET_PDB_FILE:${TARGET_TARGETNAME}> DESTINATION share/OpenSceneGraph/bin COMPONENT openscenegraph-examples)
             ENDIF(MSVC)
         ENDIF(APPLE)
 
@@ -527,38 +457,9 @@ MACRO(HANDLE_MSVC_DLL)
 
         SET_OUTPUT_DIR_PROPERTY_260(${LIB_NAME} "")        # Ensure the /Debug /Release are removed
         IF(NOT MSVC_IDE)
-            IF (NOT CMAKE24)
-                BUILDER_VERSION_GREATER(2 8 0)
-                IF(NOT VALID_BUILDER_VERSION)
-                    # If CMake < 2.8.1
-                    SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../bin/${LIB_PREFIX}${LIB_SOVERSION}-" IMPORT_PREFIX "../")
-                ELSE(NOT VALID_BUILDER_VERSION)
-                    SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
-                ENDIF(NOT VALID_BUILDER_VERSION)
-            ELSE (NOT CMAKE24)
-                SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../bin/${LIB_PREFIX}${LIB_SOVERSION}-" IMPORT_PREFIX "../")
-                SET(NEW_LIB_NAME "${OUTPUT_BINDIR}/${LIB_PREFIX}${LIB_SOVERSION}-${LIB_NAME}")
-                ADD_CUSTOM_COMMAND(
-                    TARGET ${LIB_NAME}
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy "${NEW_LIB_NAME}.lib"  "${OUTPUT_LIBDIR}/${LIB_NAME}.lib"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${NEW_LIB_NAME}.exp"  "${OUTPUT_LIBDIR}/${LIB_NAME}.exp"
-                    COMMAND ${CMAKE_COMMAND} -E remove "${NEW_LIB_NAME}.lib"
-                    COMMAND ${CMAKE_COMMAND} -E remove "${NEW_LIB_NAME}.exp"
-                    )
-            ENDIF (NOT CMAKE24)
+            SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
         ELSE(NOT MSVC_IDE)
-            IF (NOT CMAKE24)
-                BUILDER_VERSION_GREATER(2 8 0)
-                IF(NOT VALID_BUILDER_VERSION)
-                    # If CMake < 2.8.1
-                    SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../../bin/${LIB_PREFIX}${LIB_SOVERSION}-" IMPORT_PREFIX "../")
-                ELSE(NOT VALID_BUILDER_VERSION)
-                    SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
-                ENDIF(NOT VALID_BUILDER_VERSION)
-            ELSE (NOT CMAKE24)
-                SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../../bin/${LIB_PREFIX}${LIB_SOVERSION}-" IMPORT_PREFIX "../")
-            ENDIF (NOT CMAKE24)
+            SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "${LIB_PREFIX}${LIB_SOVERSION}-")
         ENDIF(NOT MSVC_IDE)
 
 #     SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "../../bin/osg${OPENSCENEGRAPH_SOVERSION}-")

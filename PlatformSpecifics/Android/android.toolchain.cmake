@@ -210,7 +210,7 @@
 
 # Modified by Lasse Oorni and Yao Wei Tjong for Urho3D
 
-cmake_minimum_required( VERSION 2.6.3 )
+cmake_minimum_required( VERSION 3.5 )
 
 # Urho3D: on Windows Cygwin-based NDK tools may fail in the linking phase with too long command line. Turn on response files to avoid this
 if( CMAKE_HOST_WIN32 )
@@ -234,11 +234,7 @@ if( _CMAKE_IN_TRY_COMPILE )
 endif()
 
 # this one is important
-if( CMAKE_VERSION VERSION_GREATER "3.0.99" )
- set( CMAKE_SYSTEM_NAME Android )
-else()
- set( CMAKE_SYSTEM_NAME Linux )
-endif()
+set( CMAKE_SYSTEM_NAME Android )
 
 # this one not so much
 set( CMAKE_SYSTEM_VERSION 1 )
@@ -854,20 +850,16 @@ else()
   unset( __realApiLevel )
  endif()
  set( ANDROID_NATIVE_API_LEVEL "${ANDROID_NATIVE_API_LEVEL}" CACHE STRING "Android API level for native code" FORCE )
- if( CMAKE_VERSION VERSION_GREATER "2.8" )
-  list( SORT ANDROID_SUPPORTED_NATIVE_API_LEVELS )
-  set_property( CACHE ANDROID_NATIVE_API_LEVEL PROPERTY STRINGS ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
- endif()
+ list( SORT ANDROID_SUPPORTED_NATIVE_API_LEVELS )
+ set_property( CACHE ANDROID_NATIVE_API_LEVEL PROPERTY STRINGS ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
 endif()
 unset( __levelIdx )
 
 
 # remember target ABI
 set( ANDROID_ABI "${ANDROID_ABI}" CACHE STRING "The target ABI for Android. If arm, then armeabi-v7a is recommended for hardware floating point." FORCE )
-if( CMAKE_VERSION VERSION_GREATER "2.8" )
- list( SORT ANDROID_SUPPORTED_ABIS_${ANDROID_ARCH_NAME} )
- set_property( CACHE ANDROID_ABI PROPERTY STRINGS ${ANDROID_SUPPORTED_ABIS_${ANDROID_ARCH_NAME}} )
-endif()
+list( SORT ANDROID_SUPPORTED_ABIS_${ANDROID_ARCH_NAME} )
+set_property( CACHE ANDROID_ABI PROPERTY STRINGS ${ANDROID_SUPPORTED_ABIS_${ANDROID_ARCH_NAME}} )
 
 
 # runtime choice (STL, rtti, exceptions)
@@ -1162,9 +1154,7 @@ if( NOT CMAKE_C_COMPILER )
 endif()
 
 set( _CMAKE_TOOLCHAIN_PREFIX "${ANDROID_TOOLCHAIN_MACHINE_NAME}-" )
-if( CMAKE_VERSION VERSION_LESS 2.8.5 )
- set( CMAKE_ASM_COMPILER_ARG1 "-c" )
-endif()
+
 if( APPLE )
  find_program( CMAKE_INSTALL_NAME_TOOL NAMES install_name_tool )
  if( NOT CMAKE_INSTALL_NAME_TOOL )
