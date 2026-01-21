@@ -1873,8 +1873,7 @@ void Image::flipVertical()
     // Callers should check isBPTC() and set TOP_LEFT origin instead of calling flipVertical().
     if (Image::isBPTC(_pixelFormat))
     {
-        OSG_WARN << "Image::flipVertical(): BPTC (BC6H/BC7) textures cannot be flipped in compressed form. "
-                 << "Use TOP_LEFT origin with runtime UV flip instead." << std::endl;
+        OSG_WARN << "Image::flipVertical(): BPTC (BC6H/BC7) textures cannot be flipped in compressed form." << std::endl;
         return;
     }
 
