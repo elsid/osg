@@ -239,7 +239,7 @@ IF(DYNAMIC_OPENSCENEGRAPH)
 
     #to add subject to find socket#ADD_SUBDIRECTORY(osgcluster)
 
-ELSE(DYNAMIC_OPENSCENEGRAPH)
+ELSE()
     #needed on win32 or the linker get confused by _declspec declarations
     ADD_DEFINITIONS(-DOSG_LIBRARY_STATIC)
 
