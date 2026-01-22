@@ -226,7 +226,7 @@ ELSEIF(${OSG_WINDOWING_SYSTEM} STREQUAL "X11")
     ELSE()
 
       SET(LIB_EXTRA_LIBS ${X11_X11_LIB} ${LIB_EXTRA_LIBS})
-    ENDIF(APPLE)
+    ENDIF()
 ELSE()
     MESSAGE(STATUS "Windowing system not supported")
 ENDIF()

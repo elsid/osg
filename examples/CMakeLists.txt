@@ -191,15 +191,15 @@ IF(DYNAMIC_OPENSCENEGRAPH)
 
     IF   (SDL_FOUND)
         ADD_SUBDIRECTORY(osgviewerSDL)
-    ENDIF(SDL_FOUND)
+    ENDIF()
 
     IF   (GTKGL_FOUND)
         ADD_SUBDIRECTORY(osgviewerGTK)
-    ENDIF(GTKGL_FOUND)
+    ENDIF()
 
     IF   (FOX_FOUND)
         ADD_SUBDIRECTORY(osgviewerFOX)
-    ENDIF(FOX_FOUND)
+    ENDIF()
 
     IF   (wxWidgets_FOUND AND CMAKE_BUILD_TYPE)
         IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
@@ -217,21 +217,21 @@ IF(DYNAMIC_OPENSCENEGRAPH)
 
         IF   (BUILD_MFC_EXAMPLE)
             ADD_SUBDIRECTORY(osgviewerMFC)
-        ENDIF(BUILD_MFC_EXAMPLE)
+        ENDIF()
 
-    ENDIF(WIN32)
+    ENDIF()
 
     IF   (APPLE)
         ADD_SUBDIRECTORY(osgviewerCocoa)
-    ENDIF(APPLE)
+    ENDIF()
 
     IF(DIRECTINPUT_FOUND)
        ADD_SUBDIRECTORY(osgdirectinput)
-    ENDIF(DIRECTINPUT_FOUND)
+    ENDIF()
 
     IF   (LIBVNCSERVER_FOUND)
         ADD_SUBDIRECTORY(osgvnc)
-    ENDIF(LIBVNCSERVER_FOUND)
+    ENDIF()
 
     #to add subject to find socket#ADD_SUBDIRECTORY(osgcluster)
 
@@ -245,4 +245,4 @@ ELSE()
         ADD_SUBDIRECTORY(osgstaticviewer)
     ENDIF()
 
-ENDIF(DYNAMIC_OPENSCENEGRAPH)
+ENDIF()
