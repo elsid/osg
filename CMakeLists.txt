@@ -141,6 +141,13 @@ IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 ENDIF()
 
+include(GNUInstallDirs)
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.20.0")
+    cmake_path(RELATIVE_PATH CMAKE_INSTALL_FULL_LIBDIR BASE_DIRECTORY "${CMAKE_INSTALL_PREFIX}" OUTPUT_VARIABLE RELATIVE_LIBDIR)
+else()
+    file(RELATIVE_PATH RELATIVE_LIBDIR ${CMAKE_INSTALL_PREFIX} ${CMAKE_INSTALL_FULL_LIBDIR})
+endif()
 
 IF(ANDROID)
     INCLUDE(OsgAndroidMacroUtils)
@@ -883,18 +890,6 @@ IF(CYGWIN)
   SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 ENDIF()
 
-# Set OSG_INSTALL_LIBDIR to specify the installation directories of object code libraries
-IF(DEFINED LIB_POSTFIX)
-  # Use LIB_POSTFIX if defined
-  SET(OSG_INSTALL_LIBDIR lib${LIB_POSTFIX})
-ELSE()
-  INCLUDE(GNUInstallDirs)
-  SET(OSG_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
-ENDIF()
-IF(NOT DEFINED LIB_POSTFIX)
-    SET(LIB_POSTFIX "")
-ENDIF()
-
 # Here we apparently do some funky stuff with making the bin/ and lib/
 # folders which is probably needed to work around a very old CMake bug?
 
@@ -935,11 +930,6 @@ FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})        # For each configuration (Debu
         SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${OUTPUT_LIBDIR}")
     ENDIF()
 ENDFOREACH()
-
-#SET(INSTALL_BINDIR OpenSceneGraph/bin)
-#SET(INSTALL_INCDIR OpenSceneGraph/include)
-#SET(INSTALL_LIBDIR OpenSceneGraph/lib)
-#SET(INSTALL_DOCDIR OpenSceneGraph/doc)
 
 ################################################################################
 # User Options
@@ -1190,7 +1180,7 @@ IF(BUILD_DOCUMENTATION)
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/PlatformSpecifics/Windows/icons/src/osg32-32.png
         ${PROJECT_BINARY_DIR}/doc/OpenSceneGraphReferenceDocs/osg32-32.png COPYONLY
     )
-    #INSTALL(FILES ${PROJECT_BINARY_DIR}/doc/${PROJECT_NAME}ReferenceDocs-${OPENSCENEGRAPH_VERSION}.chm DESTINATION doc OPTIONAL COMPONENT openscenegraph-doc)
+
     INSTALL(DIRECTORY ${PROJECT_BINARY_DIR}/doc/OpenSceneGraphReferenceDocs DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT openscenegraph-doc)
 
     # now set up openthreads documentation generation
@@ -1206,7 +1196,7 @@ IF(BUILD_DOCUMENTATION)
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/PlatformSpecifics/Windows/icons/src/osg32-32.png
         ${PROJECT_BINARY_DIR}/doc/OpenThreadsReferenceDocs/osg32-32.png COPYONLY
     )
-    #INSTALL(FILES ${PROJECT_BINARY_DIR}/doc/${PROJECT_NAME}ReferenceDocs-${OPENSCENEGRAPH_VERSION}.chm DESTINATION doc OPTIONAL COMPONENT openscenegraph-doc)
+
     INSTALL(DIRECTORY ${PROJECT_BINARY_DIR}/doc/OpenThreadsReferenceDocs DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT openthreads-doc)
 
     # Process our other doxyfiles but don't create targets for these
@@ -1275,7 +1265,7 @@ FOREACH(PKGCONFIG_FILE ${PKGCONFIG_FILES})
     ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc
     @ONLY
     )
-  INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
+  INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT libopenscenegraph-dev)
 ENDFOREACH(PKGCONFIG_FILE)
 
 
@@ -1288,7 +1278,7 @@ IF(REQUIRES_LIBPATH_MESSAGE)
     IF (NOT OSG_LIBPATH_MESSAGE_HAS_BEEN_RUN_BEFORE)
         SET(OSG_LIBPATH_MESSAGE_HAS_BEEN_RUN_BEFORE 1 CACHE INTERNAL "Flag to track whether the libpath message has been reported before")
 
-        MESSAGE("\nThe build system is configured to install libraries to ${CMAKE_INSTALL_PREFIX}/lib${LIB_POSTFIX}\n"
+        MESSAGE("\nThe build system is configured to install libraries to ${CMAKE_INSTALL_FULL_LIBDIR}\n"
             "Your applications may not be able to find your installed libraries unless you:\n"
             "    set your LD_LIBRARY_PATH (user specific) or\n"
             "    update your ld.so configuration (system wide)")
@@ -1310,12 +1300,12 @@ IF(REQUIRES_LIBPATH_MESSAGE)
             IF(EXISTS /etc/ld.so.conf)
                 MESSAGE("You have an ld.so.conf file in /etc, if you wish to ensure \n"
                 "that applications find the installed osg libraries, system wide, you\n"
-                "could add ${CMAKE_INSTALL_PREFIX}/lib${LIB_POSTFIX} to it.")
+                "could add ${CMAKE_INSTALL_FULL_LIBDIR} to it.")
             ENDIF()
         ENDIF()
 
         # emit a message during installation.
-        INSTALL(CODE "MESSAGE(\"Libraries were installed to ${CMAKE_INSTALL_PREFIX}lib${LIB_POSTFIX}.\\nYou may need to update your ld.so configuration. \")")
+        INSTALL(CODE "MESSAGE(\"Libraries were installed to ${CMAKE_INSTALL_FULL_LIBDIR}.\\nYou may need to update your ld.so configuration. \")")
 
     ENDIF()
 
