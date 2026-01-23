@@ -335,6 +335,20 @@ bool Image::isPackedType(GLenum type)
     }
 }
 
+bool Image::isBPTC(GLenum pixelFormat)
+{
+    switch(pixelFormat)
+    {
+        case(GL_COMPRESSED_RGBA_BPTC_UNORM):
+        case(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM):
+        case(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT):
+        case(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT):
+            return true;
+        default:
+            return false;
+    }
+}
+
 
 GLenum Image::computePixelFormat(GLenum format)
 {
@@ -707,6 +721,11 @@ unsigned int Image::computeNumComponents(GLenum pixelFormat)
         case (GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR) : return 4;
         case (GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR) : return 4;
         case (GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR) : return 4;
+        // BPTC (BC6H/BC7)
+        case (GL_COMPRESSED_RGBA_BPTC_UNORM) : return 4;
+        case (GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM) : return 4;
+        case (GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT) : return 3;
+        case (GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT) : return 3;
         default:
         {
             OSG_WARN<<"error pixelFormat = "<<std::hex<<pixelFormat<<std::dec<<std::endl;
@@ -733,6 +752,11 @@ unsigned int Image::computePixelSizeInBits(GLenum format,GLenum type)
         case(GL_COMPRESSED_RED_RGTC1_EXT):   return 4;
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT): return 8;
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT): return 8;
+        // BPTC (BC6H/BC7) - 128 bits per 4x4 block = 8 bits per pixel
+        case(GL_COMPRESSED_RGBA_BPTC_UNORM): return 8;
+        case(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM): return 8;
+        case(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT): return 8;
+        case(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT): return 8;
         case(GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG): return 4;
         case(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG): return 2;
         case(GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG): return 4;
@@ -892,6 +916,11 @@ osg::Vec3i Image::computeBlockFootprint(GLenum pixelFormat)
         case(GL_COMPRESSED_RED_RGTC1_EXT) :
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT) :
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT) :
+        // BPTC (BC6H/BC7) - 4x4 blocks
+        case(GL_COMPRESSED_RGBA_BPTC_UNORM) :
+        case(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM) :
+        case(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT) :
+        case(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT) :
         case(GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG) :
         case(GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG) :
         case(GL_ETC1_RGB8_OES) :
@@ -971,6 +1000,13 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT):
             return osg::maximum(16u,packing); // block size of 16
 
+        // BPTC (BC6H/BC7) - 16 bytes per block
+        case(GL_COMPRESSED_RGBA_BPTC_UNORM):
+        case(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM):
+        case(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT):
+        case(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT):
+            return osg::maximum(16u,packing); // block size of 16
+
         case(GL_COMPRESSED_RGB8_ETC2):
         case(GL_COMPRESSED_SRGB8_ETC2):
         case(GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2):
@@ -1021,6 +1057,17 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
 
 unsigned int Image::computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing)
 {
+    // Handle block-compressed formats (S3TC, RGTC, BPTC, etc.)
+    // Prevents stride/pitch misalignment. Surprised this didn't come up sooner on the S3TC formats.
+    int blockSize = computeBlockSize(pixelFormat, 0);
+    if (blockSize > 0) {
+        osg::Vec3i footprint = computeBlockFootprint(pixelFormat);
+        int blocksWide = (width + footprint.x() - 1) / footprint.x();
+        unsigned int size = blockSize * blocksWide;
+        return roudUpToMultiple(size, packing);
+    }
+
+    // Non-compressed formats
     unsigned int pixelSize = computePixelSizeInBits(pixelFormat,type);
     int widthInBits = width*pixelSize;
     int packingInBits = packing!=0 ? packing*8 : 8;
@@ -1819,6 +1866,14 @@ void Image::flipVertical()
     if (!_mipmapData.empty() && _r>1)
     {
         OSG_WARN << "Error Image::flipVertical() do not succeed : flipping of mipmap 3d textures not yet supported."<<std::endl;
+        return;
+    }
+
+    // BPTC (BC6H/BC7) textures cannot be flipped in compressed form due to complex per-block encoding.
+    // Callers should check isBPTC() and set TOP_LEFT origin instead of calling flipVertical().
+    if (Image::isBPTC(_pixelFormat))
+    {
+        OSG_WARN << "Image::flipVertical(): BPTC (BC6H/BC7) textures cannot be flipped in compressed form." << std::endl;
         return;
     }
 

@@ -814,6 +814,30 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
                     pixelFormat    = GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT;
                     break;
 
+                case OSG_DXGI_FORMAT_BC6H_UF16:
+                    internalFormat = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+                    pixelFormat    = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    break;
+
+                case OSG_DXGI_FORMAT_BC6H_SF16:
+                    internalFormat = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+                    pixelFormat    = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    break;
+
+                case OSG_DXGI_FORMAT_BC7_UNORM:
+                    internalFormat = GL_COMPRESSED_RGBA_BPTC_UNORM;
+                    pixelFormat    = GL_COMPRESSED_RGBA_BPTC_UNORM;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    break;
+
+                case OSG_DXGI_FORMAT_BC7_UNORM_SRGB:
+                    internalFormat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+                    pixelFormat    = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+                    packing = 4;        // 8 bits/pixel. 4 px = 4 bytes
+                    break;
+
                 default:
                     OSG_WARN << "ReadDDSFile warning: unhandled DX10 pixel format 0x"
                              << std::hex << std::setw(8) << std::setfill('0')
@@ -1100,7 +1124,11 @@ osg::Image* ReadDDSFile(std::istream& _istream, bool flipDDSRead)
 
     if (mipmap_offsets.size()>0) osgImage->setMipmapLevels(mipmap_offsets);
 
-    if (flipDDSRead) {
+    osgImage->setOrigin(osg::Image::TOP_LEFT);
+
+    // BPTC (BC6H/BC7) textures cannot be flipped in compressed form
+    if (flipDDSRead && !osg::Image::isBPTC(internalFormat))
+    {
         osgImage->setOrigin(osg::Image::BOTTOM_LEFT);
         if (!isDXTC || ((s>4 && s%4==0 && t>4 && t%4==0) || s<=4)) // Flip may crash (access violation) or fail for non %4 dimensions (except for s<4). Tested with revision trunk 2013-02-22.
         {
