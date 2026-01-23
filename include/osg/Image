@@ -439,6 +439,7 @@ class OSG_EXPORT Image : public BufferData
         void ensureValidSizeForTexturing(GLint maxTextureSize);
 
         static bool isPackedType(GLenum type);
+        static bool isBPTC(GLenum pixelFormat);
         static GLenum computePixelFormat(GLenum pixelFormat);
         static GLenum computeFormatDataType(GLenum pixelFormat);
 
