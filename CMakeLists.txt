@@ -13,9 +13,9 @@ SET(OPENSCENEGRAPH_RELEASE_CANDIDATE 0)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 
-if(COMMAND cmake_policy)
+if(POLICY CMP0069)
     # INTERPROCEDURAL_OPTIMIZATION is enforced when enabled.
     # Allows passing -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
     cmake_policy(SET CMP0069 NEW)
@@ -139,7 +139,7 @@ SET(CMAKE_MODULE_PATH "${OpenSceneGraph_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_
 # Change the default build type to Release
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+ENDIF()
 
 
 IF(ANDROID)
@@ -215,7 +215,7 @@ IF (OSG_MAINTAINER)
         COMMAND ${GENERATELOGS} > ChangeLog
     )
 
-ENDIF(OSG_MAINTAINER)
+ENDIF()
 
 IF(NOT ANDROID)
 IF(APPLE)
@@ -287,7 +287,7 @@ IF(UNIX AND NOT ANDROID)
 
     IF( CMAKE_SYSTEM MATCHES "Linux" )
         FIND_LIBRARY( RT_LIBRARY rt )
-    ENDIF( CMAKE_SYSTEM MATCHES "Linux" )
+    ENDIF()
 
 ENDIF()
 
@@ -314,7 +314,7 @@ IF(WIN32 AND NOT ANDROID)
         INCLUDE (OsgDetermineWinVersion)
         get_WIN32_WINNT(WIN_VERSION)
         ADD_DEFINITIONS(-D_WIN32_WINNT=${WIN_VERSION})
-    ENDIF(OSG_DETERMINE_WIN_VERSION)
+    ENDIF()
 
     IF(MSVC)
         # This option is to enable the /MP switch for Visual Studio 2005 and above compilers
@@ -322,7 +322,7 @@ IF(WIN32 AND NOT ANDROID)
         MARK_AS_ADVANCED(WIN32_USE_MP)
         IF(WIN32_USE_MP)
             SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-        ENDIF(WIN32_USE_MP)
+        ENDIF()
 
         # turn off various warnings
         # foreach(warning 4244 4251 4267 4275 4290 4786 4305 4996)
@@ -336,7 +336,7 @@ IF(WIN32 AND NOT ANDROID)
         MARK_AS_ADVANCED(WIN32_USE_DYNAMICBASE)
         IF(WIN32_USE_DYNAMICBASE)
             SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DYNAMICBASE")
-        ENDIF(WIN32_USE_DYNAMICBASE)
+        ENDIF()
 
         # More MSVC specific compilation flags
         ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
@@ -348,7 +348,7 @@ IF(WIN32 AND NOT ANDROID)
             ADD_DEFINITIONS(-D_ITERATOR_DEBUG_LEVEL=0) # this supercedes _SECURE_SCL and _HAS_ITERATOR_DEBUGGING in VS2010 and forward
             ADD_DEFINITIONS(-D_SECURE_SCL=0)
             ADD_DEFINITIONS(-D_HAS_ITERATOR_DEBUGGING=0)
-        ENDIF(MSVC_DISABLE_CHECKED_ITERATORS)
+        ENDIF()
 
         OPTION(MSVC_USE_DEFAULT_STACK_SIZE "Set to ON to use the default Visual C++ stack size. CMake forces a high stack size by default, which can cause problems for applications with large number of threads." OFF)
         MARK_AS_ADVANCED(MSVC_USE_DEFAULT_STACK_SIZE)
@@ -356,7 +356,7 @@ IF(WIN32 AND NOT ANDROID)
             STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
             STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
             STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
-        ENDIF(MSVC_USE_DEFAULT_STACK_SIZE)
+        ENDIF()
         get_filename_component( CMAKE_MAKE_PROGRAM_NAME ${CMAKE_MAKE_PROGRAM} NAME)
         IF (CMAKE_MAKE_PROGRAM_NAME STREQUAL "VCExpress.exe")
             OPTION(MSVC_BUILD_USE_SOLUTION_FOLDERS "Enable project grouping in VS - VCExpress detected, not supported in VCExpress )" OFF)
@@ -393,13 +393,13 @@ IF(WIN32 AND NOT ANDROID)
             SET(CMAKE_MODULE_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
             SET(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
             SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
-        ENDIF(NOT OSG_MSVC_DEBUG_INCREMENTAL_LINK)
+        ENDIF()
 
         SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
         SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG")
         SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /DEBUG")
-    ENDIF(MSVC)
-ENDIF(WIN32 AND NOT ANDROID)
+    ENDIF()
+ENDIF()
 
 ########################################################################################################
 ##### these were settings located in SetupCommon.cmake used in Luigi builds.... find out what are useful
@@ -414,10 +414,10 @@ ENDIF(WIN32 AND NOT ANDROID)
 #luigi#        SET(CMAKE_CXX_COMPILER "g++")
 #luigi#        SET(CMAKE_CXX_COMPILER_LOADED 2)
 #luigi#        SET(CMAKE_CXX_COMPILER_WORKS 2)
-#luigi#    ENDIF (contains)
+#luigi#    ENDIF()
 #luigi#    SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 #luigi#    SET(CMAKE_CXX_FLAGS_DEBUG "-ggdb -gstabs")
-#luigi#ENDIF(UNIX)
+#luigi#ENDIF()
 ########################################################################################################
 
 OPTION(OSG_NOTIFY_DISABLED "Set to ON to build OpenSceneGraph with the notify() disabled." OFF)
@@ -794,7 +794,7 @@ IF   (BUILD_OSG_EXAMPLES AND NOT ANDROID)
     FIND_PACKAGE(FOX)
     FIND_PACKAGE(wxWidgets COMPONENTS base core gl net)
 
-ENDIF(BUILD_OSG_EXAMPLES AND NOT ANDROID)
+ENDIF()
 
 
 # Platform specific:
@@ -903,14 +903,14 @@ SET(OUTPUT_BINDIR ${PROJECT_BINARY_DIR}/bin)
 MAKE_DIRECTORY(${OUTPUT_BINDIR})
 IF(MSVC AND NOT MSVC_IDE)
     MAKE_DIRECTORY(${OUTPUT_BINDIR}/${OSG_PLUGINS})
-ENDIF(MSVC AND NOT MSVC_IDE)
+ENDIF()
 
 #SET(OUTPUT_LIBDIR ${PROJECT_BINARY_DIR}/lib/${CMAKE_SYSTEM_NAME})
 SET(OUTPUT_LIBDIR ${PROJECT_BINARY_DIR}/lib)
 MAKE_DIRECTORY(${OUTPUT_LIBDIR})
 IF(NOT MSVC OR MSVC_IDE)
     MAKE_DIRECTORY(${OUTPUT_LIBDIR}/${OSG_PLUGINS})
-ENDIF(NOT MSVC OR MSVC_IDE)
+ENDIF()
 
 # CMake >= 2.8.1 changed the output directory algorithm (See doc).
 # Here we also set per-configuration directories (CMAKE_*_OUTPUT_DIRECTORY_<CONFIG>), or else binaries are generated in /bin/Debug and /bin/Release, etc. with MSVC and Xcode.
@@ -920,9 +920,9 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_LIBDIR})
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BINDIR})
 IF(WIN32)
     SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_BINDIR})
-ELSE(WIN32)
+ELSE()
     SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_LIBDIR})
-ENDIF(WIN32)
+ENDIF()
 
 
 FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})        # For each configuration (Debug, Release, MinSizeRel... and/or anything the user chooses)
@@ -1089,7 +1089,7 @@ IF   (BUILD_OSG_APPLICATIONS AND NOT ANDROID)
     ADD_SUBDIRECTORY(applications)
 ENDIF()
 
-IF   (BUILD_OSG_EXAMPLES)
+IF   (BUILD_OSG_EXAMPLES AND NOT ANDROID)
     ADD_SUBDIRECTORY(examples)
 ENDIF()
 
@@ -1232,7 +1232,7 @@ IF(BUILD_DOCUMENTATION)
         ${PROJECT_BINARY_DIR}/doc/openthreads.doxyfile
     )
     SET_TARGET_PROPERTIES(doc_openthreads PROPERTIES FOLDER "Documentation")
-ENDIF(BUILD_DOCUMENTATION)
+ENDIF()
 
 OPTION(BUILD_DASHBOARD_REPORTS "Set to ON to activate reporting of OpenSceneGraph builds here http://cdash.openscenegraph.org/index.php?project=OpenSceneGraph" OFF)
 IF(BUILD_DASHBOARD_REPORTS)
@@ -1317,7 +1317,7 @@ IF(REQUIRES_LIBPATH_MESSAGE)
         # emit a message during installation.
         INSTALL(CODE "MESSAGE(\"Libraries were installed to ${CMAKE_INSTALL_PREFIX}lib${LIB_POSTFIX}.\\nYou may need to update your ld.so configuration. \")")
 
-    ENDIF(NOT OSG_LIBPATH_MESSAGE_HAS_BEEN_RUN_BEFORE)
+    ENDIF()
 
 ELSE()
     SET(OSG_LIBPATH_MESSAGE_HAS_BEEN_RUN_BEFORE 0 CACHE INTERNAL "Flag to track whether the libpath message has been reported before")
