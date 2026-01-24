@@ -68,7 +68,7 @@ class OSG_EXPORT GraphicsObjectManager : public osg::Referenced
         virtual void reportStats(std::ostream& /*out*/)  {}
         virtual void recomputeStats(std::ostream& /*out*/) const  {}
 
-        virtual void reportStats(unsigned frameNumber, Stats& stats) const {}
+        virtual void reportStats(unsigned /*frameNumber*/, Stats& /*stats*/) const {}
 
 
         /** Flush all deleted OpenGL objects within the specified availableTime.
