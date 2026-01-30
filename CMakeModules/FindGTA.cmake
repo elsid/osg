@@ -8,15 +8,10 @@
 # correspond to the ./configure --prefix=$GTA_DIR
 # used in building libgta.
 
-INCLUDE(FindPkgConfig OPTIONAL)
-
-IF(PKG_CONFIG_FOUND)
-
-    INCLUDE(FindPkgConfig)
-
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
     PKG_CHECK_MODULES(GTA gta)
-
-ENDIF(PKG_CONFIG_FOUND)
+endif()
 
 IF(NOT GTA_FOUND)
     FIND_PATH(GTA_INCLUDE_DIRS gta/gta.hpp

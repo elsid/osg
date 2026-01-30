@@ -226,7 +226,6 @@ IF (OSG_MAINTAINER)
 
 ENDIF()
 
-IF(NOT ANDROID)
 IF(APPLE)
 
     IF(OSG_BUILD_PLATFORM_IPHONE)
@@ -271,11 +270,10 @@ IF(APPLE)
 
     OPTION(OSG_COMPILE_FRAMEWORKS "compile frameworks instead of dylibs (experimental)" OFF)
     SET(OSG_COMPILE_FRAMEWORKS_INSTALL_NAME_DIR "@executable_path/../Frameworks" CACHE STRING "install name dir for compiled frameworks")
-ELSE()
+ELSEIF(NOT ANDROID)
     # Non-Apple: Find OpenGL
     FIND_PACKAGE(OpenGL)
     FIND_PACKAGE(EGL)
-ENDIF()
 ENDIF()
 
 
