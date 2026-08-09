@@ -126,8 +126,7 @@ Atomic::exchange(unsigned value)
 Atomic::operator unsigned() const
 {
 #if defined(_OPENTHREADS_ATOMIC_USE_GCC_BUILTINS)
-    __sync_synchronize();
-    return _value;
+    return __atomic_load_n(&_value, __ATOMIC_SEQ_CST);
 #elif defined(_OPENTHREADS_ATOMIC_USE_WIN32_INTERLOCKED)
     MemoryBarrier();
     return _value;
@@ -157,8 +156,7 @@ void*
 AtomicPtr::get() const
 {
 #if defined(_OPENTHREADS_ATOMIC_USE_GCC_BUILTINS)
-    __sync_synchronize();
-    return _ptr;
+    return __atomic_load_n(&_ptr, __ATOMIC_SEQ_CST);
 #elif defined(_OPENTHREADS_ATOMIC_USE_WIN32_INTERLOCKED)
     MemoryBarrier();
     return _ptr;
