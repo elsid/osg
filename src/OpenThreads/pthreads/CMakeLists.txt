@@ -18,7 +18,6 @@ SET(TARGET_SRC
     PThreadMutexPrivateData.h
     PThreadPrivateData.h
     ../common/Version.cpp
-    ../common/Atomic.cpp
 )
 
 IF(CYGWIN)  # define for pthread_{yield,getconcurrency,setconcurrency}
