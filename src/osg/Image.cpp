@@ -1058,6 +1058,7 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
 unsigned int Image::computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing)
 {
     unsigned int pixelSize = computePixelSizeInBits(pixelFormat,type);
+    width = roundUpToMultiple(width, computeBlockFootprint(pixelFormat).x());
     int widthInBits = width*pixelSize;
     int packingInBits = packing!=0 ? packing*8 : 8;
     //OSG_INFO << "width="<<width<<" pixelSize="<<pixelSize<<"  width in bit="<<widthInBits<<" packingInBits="<<packingInBits<<" widthInBits%packingInBits="<<widthInBits%packingInBits<<std::endl;
