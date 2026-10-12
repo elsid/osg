@@ -2456,7 +2456,7 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
             return;
         }
 
-        unsigned int newTotalSize = osg::Image::computeRowWidthInBytes(inwidth,image->getPixelFormat(),image->getDataType(),image->getPacking())*inheight;
+        unsigned int newTotalSize = osg::Image::computeImageSizeInBytes(inwidth,inheight,1,image->getPixelFormat(),image->getDataType(),image->getPacking());
         dataPtr = new unsigned char [newTotalSize];
 
         if (!dataPtr)
@@ -2784,7 +2784,7 @@ void Texture::applyTexImage2D_subload(State& state, GLenum target, const Image* 
             return;
         }
 
-        unsigned int newTotalSize = osg::Image::computeRowWidthInBytes(inwidth,image->getPixelFormat(),image->getDataType(),image->getPacking())*inheight;
+        unsigned int newTotalSize = osg::Image::computeImageSizeInBytes(inwidth,inheight,1,image->getPixelFormat(),image->getDataType(),image->getPacking());
         dataPtr = new unsigned char [newTotalSize];
 
         if (!dataPtr)
