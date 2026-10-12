@@ -1057,17 +1057,6 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
 
 unsigned int Image::computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing)
 {
-    // Handle block-compressed formats (S3TC, RGTC, BPTC, etc.)
-    // Prevents stride/pitch misalignment. Surprised this didn't come up sooner on the S3TC formats.
-    int blockSize = computeBlockSize(pixelFormat, 0);
-    if (blockSize > 0) {
-        osg::Vec3i footprint = computeBlockFootprint(pixelFormat);
-        int blocksWide = (width + footprint.x() - 1) / footprint.x();
-        unsigned int size = blockSize * blocksWide;
-        return roudUpToMultiple(size, packing);
-    }
-
-    // Non-compressed formats
     unsigned int pixelSize = computePixelSizeInBits(pixelFormat,type);
     int widthInBits = width*pixelSize;
     int packingInBits = packing!=0 ? packing*8 : 8;
