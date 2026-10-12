@@ -452,7 +452,8 @@ class OSG_EXPORT Image : public BufferData
         static unsigned int computePixelSizeInBits(GLenum pixelFormat,GLenum type);
         static unsigned int computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing);
         static unsigned int computeImageSizeInBytes(int width,int height, int depth, GLenum pixelFormat, GLenum type, int packing = 1, int slice_packing = 1, int image_packing = 1);
-        static int roudUpToMultiple(int s, int pack);
+        static int roundUpToMultiple(int s, int pack);
+        static int roudUpToMultiple(int s, int pack) { return roundUpToMultiple(s, pack); }
         static int computeNearestPowerOfTwo(int s,float bias=0.5f);
         static int computeNumberOfMipmapLevels(int s,int t = 1, int r = 1);
 

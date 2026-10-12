@@ -1098,7 +1098,7 @@ unsigned int Image::computeImageSizeInBytes(int width,int height, int depth, GLe
     return osg::maximum( size, computeBlockSize(pixelFormat, packing) );
 }
 
-int Image::roudUpToMultiple(int s, int pack) {
+int Image::roundUpToMultiple(int s, int pack) {
     if (pack < 2) return s;
     s += pack - 1;
     s -= s % pack;
