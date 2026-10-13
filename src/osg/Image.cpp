@@ -174,6 +174,7 @@ void Image::DataIterator::assign()
 
         int imageHeight = _image->t()>>_mipmapNum;
         if (imageHeight==0) imageHeight = 1;
+        imageHeight = roundUpToMultiple(imageHeight, Image::computeBlockFootprint(_image->getPixelFormat()).y());
 
         unsigned int rowWidthInBytes = Image::computeRowWidthInBytes(rowLength,_image->getPixelFormat(),_image->getDataType(),_image->getPacking());
         unsigned int imageSizeInBytes = rowWidthInBytes*imageHeight;
@@ -1057,18 +1058,8 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
 
 unsigned int Image::computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing)
 {
-    // Handle block-compressed formats (S3TC, RGTC, BPTC, etc.)
-    // Prevents stride/pitch misalignment. Surprised this didn't come up sooner on the S3TC formats.
-    int blockSize = computeBlockSize(pixelFormat, 0);
-    if (blockSize > 0) {
-        osg::Vec3i footprint = computeBlockFootprint(pixelFormat);
-        int blocksWide = (width + footprint.x() - 1) / footprint.x();
-        unsigned int size = blockSize * blocksWide;
-        return roudUpToMultiple(size, packing);
-    }
-
-    // Non-compressed formats
     unsigned int pixelSize = computePixelSizeInBits(pixelFormat,type);
+    width = roundUpToMultiple(width, computeBlockFootprint(pixelFormat).x());
     int widthInBits = width*pixelSize;
     int packingInBits = packing!=0 ? packing*8 : 8;
     //OSG_INFO << "width="<<width<<" pixelSize="<<pixelSize<<"  width in bit="<<widthInBits<<" packingInBits="<<packingInBits<<" widthInBits%packingInBits="<<widthInBits%packingInBits<<std::endl;
@@ -1109,7 +1100,7 @@ unsigned int Image::computeImageSizeInBytes(int width,int height, int depth, GLe
     return osg::maximum( size, computeBlockSize(pixelFormat, packing) );
 }
 
-int Image::roudUpToMultiple(int s, int pack) {
+int Image::roundUpToMultiple(int s, int pack) {
     if (pack < 2) return s;
     s += pack - 1;
     s -= s % pack;
@@ -1291,9 +1282,9 @@ void Image::allocateImage(int s,int t,int r,
 
     unsigned int previousTotalSize = 0;
 
-    if (_data) previousTotalSize = computeRowWidthInBytes(_s,_pixelFormat,_dataType,_packing)*_t*_r;
+    if (_data) previousTotalSize = computeImageSizeInBytes(_s,_t,_r,_pixelFormat,_dataType,_packing);
 
-    unsigned int newTotalSize = computeRowWidthInBytes(s,format,type,packing)*t*r;
+    unsigned int newTotalSize = computeImageSizeInBytes(s,t,r,format,type,packing);
 
     if (newTotalSize!=previousTotalSize)
     {
@@ -1303,7 +1294,7 @@ void Image::allocateImage(int s,int t,int r,
             deallocateData(); // and sets it to NULL.
     }
 
-    if (_data)
+    if (_data || newTotalSize == 0)
     {
         callback_needed = (_s != s) || (_t != t) || (_r != r);
         _s = s;
@@ -1574,7 +1565,7 @@ void Image::readImageFromCurrentTexture(unsigned int contextID, bool copyMipMaps
             glGetTexLevelParameteriv(textureMode, i, GL_TEXTURE_HEIGHT, &height);
             glGetTexLevelParameteriv(textureMode, i, GL_TEXTURE_DEPTH, &depth);
 
-            unsigned int level_size = computeRowWidthInBytes(width,internalformat,type,packing)*height*depth;
+            unsigned int level_size = computeRowWidthInBytes(width,internalformat,type,packing)*roundUpToMultiple(height,computeBlockFootprint(internalformat).y())*depth;
 
             total_size += level_size;
         }
@@ -1660,7 +1651,7 @@ void Image::scaleImage(int s,int t,int r, GLenum newDataType)
         return;
     }
 
-    unsigned int newTotalSize = computeRowWidthInBytes(s,_pixelFormat,newDataType,_packing)*t;
+    unsigned int newTotalSize = computeImageSizeInBytes(s,t,1,_pixelFormat,newDataType,_packing);
 
     // need to sort out what size to really use...
     unsigned char* newData = new unsigned char [newTotalSize];
